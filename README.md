@@ -20,6 +20,17 @@
 
 Real-time communication over [MoQ Transport](https://datatracker.ietf.org/doc/draft-ietf-moq-transport/) — messaging, presence, media, and more.
 
+This is a web implementation of the following IETF drafts:
+
+| Draft | Description | Status |
+|-------|-------------|--------|
+| [draft-jennings-moq-mocha-chat](https://datatracker.ietf.org/doc/draft-jennings-moq-mocha-chat/) | Messaging over MoQ Transport | Implemented |
+| [draft-jennings-moq-mocha-meetings](https://datatracker.ietf.org/doc/draft-jennings-moq-mocha-meetings/) | Real-Time Conferencing over MoQ Transport | Implemented |
+| [draft-jennings-moq-mocha-mls-keying](https://datatracker.ietf.org/doc/draft-jennings-moq-mocha-mls-keying/) | End-to-End Encryption Key Management over MoQ | Implemented |
+| [draft-jennings-moq-mocha-identity](https://datatracker.ietf.org/doc/draft-jennings-moq-mocha-identity/) | Authentication, Authorization, and Federation | Partial — auth implemented, federation not yet |
+| [draft-jennings-moq-mocha-reactions](https://datatracker.ietf.org/doc/draft-jennings-moq-mocha-reactions/) | Real-Time Reactions over MoQ Transport | Implemented |
+| [draft-jennings-moq-mocha-pab](https://datatracker.ietf.org/doc/draft-jennings-moq-mocha-pab/) | Personal Address Book | Namespace only |
+
 ## Packages
 
 | Package | Path | Description |
