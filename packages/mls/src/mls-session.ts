@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Cisco
 // SPDX-License-Identifier: BSD-2-Clause
 
-import { MlsMessageType, type MlsConfig, type MlsGroupState, type MlsParticipant, type MlsTrackKey, type MlsSessionEvents, type KeepAlive } from './types.js';
-import { MlsNamespace, type MlsTrackRef } from './namespace.js';
-import { serializeMlsObject, deserializeMlsObject, deriveTrackKey, computeKeepAliveMac, verifyKeepAliveMac, encodeKeyId, decodeKeyId } from './crypto.js';
+import { MlsMessageType, type MlsConfig, type MlsGroupState, type MlsTrackKey, type MlsSessionEvents, type KeepAlive } from './types.js';
+import { MlsNamespace } from './namespace.js';
+import { serializeMlsObject, deserializeMlsObject, deriveTrackKey, computeKeepAliveMac } from './crypto.js';
 
 type EventHandler<K extends keyof MlsSessionEvents> = (data: MlsSessionEvents[K]) => void;
 
@@ -256,9 +256,9 @@ export class MlsSession {
     );
   }
 
-  private handleMlsObject(fn: 'mls' | 'keypackage', fromParticipant: string, data: Uint8Array, groupId: number): void {
+  private handleMlsObject(_fn: 'mls' | 'keypackage', fromParticipant: string, data: Uint8Array, groupId: number): void {
     try {
-      const { type, payload } = deserializeMlsObject(data);
+      const { type } = deserializeMlsObject(data);
 
       switch (type) {
         case MlsMessageType.Commit:

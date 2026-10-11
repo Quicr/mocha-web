@@ -46,7 +46,7 @@ export async function deriveTrackKey(
 
   const baseKey = await crypto.subtle.importKey(
     'raw',
-    applicationSecret,
+    applicationSecret as BufferSource,
     'HKDF',
     false,
     ['deriveBits'],
@@ -54,14 +54,14 @@ export async function deriveTrackKey(
 
   const keyInfo = concat(TRACK_KEY_LABEL, trackNameBytes);
   const keyBits = await crypto.subtle.deriveBits(
-    { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info: keyInfo },
+    { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32) as BufferSource, info: keyInfo as BufferSource },
     baseKey,
     keyLength * 8,
   );
 
   const nonceInfo = concat(TRACK_NONCE_LABEL, trackNameBytes);
   const nonceBits = await crypto.subtle.deriveBits(
-    { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info: nonceInfo },
+    { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32) as BufferSource, info: nonceInfo as BufferSource },
     baseKey,
     nonceLength * 8,
   );
@@ -84,7 +84,7 @@ export async function computeKeepAliveMac(
 ): Promise<Uint8Array> {
   const key = await crypto.subtle.importKey(
     'raw',
-    confirmationKey,
+    confirmationKey as BufferSource,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign'],
@@ -147,7 +147,7 @@ export async function encryptObject(
 ): Promise<Uint8Array> {
   const key = await crypto.subtle.importKey(
     'raw',
-    trackKey.key,
+    trackKey.key as BufferSource,
     'AES-GCM',
     false,
     ['encrypt'],
@@ -157,9 +157,9 @@ export async function encryptObject(
   const iv = xorNonce(trackKey.nonce, objectId);
 
   const ciphertext = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv, tagLength: 128 },
+    { name: 'AES-GCM', iv: iv as BufferSource, tagLength: 128 },
     key,
-    plaintext,
+    plaintext as BufferSource,
   );
 
   return new Uint8Array(ciphertext);
@@ -175,7 +175,7 @@ export async function decryptObject(
 ): Promise<Uint8Array> {
   const key = await crypto.subtle.importKey(
     'raw',
-    trackKey.key,
+    trackKey.key as BufferSource,
     'AES-GCM',
     false,
     ['decrypt'],
@@ -184,9 +184,9 @@ export async function decryptObject(
   const iv = xorNonce(trackKey.nonce, objectId);
 
   const plaintext = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv, tagLength: 128 },
+    { name: 'AES-GCM', iv: iv as BufferSource, tagLength: 128 },
     key,
-    ciphertext,
+    ciphertext as BufferSource,
   );
 
   return new Uint8Array(plaintext);
