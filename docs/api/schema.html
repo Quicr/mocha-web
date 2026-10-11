@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mocha — Database Schema</title>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d1117; --surface:#161b22; --surface2:#21262d; --border:#30363d;
+  --text:#e6edf3; --text2:#8b949e; --text3:#6e7681;
+  --blue:#79c0ff; --green:#7ee787; --purple:#d2a8ff;
+  --orange:#ffa657; --red:#ff7b72; --teal:#64ffda; --yellow:#e3b341;
+  --accent:#1a73e8; --sidebar:260px;
+  /* domain colours */
+  --d-identity:#79c0ff; --d-org:#7ee787; --d-channel:#ffa657;
+  --d-message:#d2a8ff; --d-moq:#64ffda; --d-recording:#ff7b72;
+  --d-perms:#e3b341; --d-notify:#f0883e; --d-audit:#8b949e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;line-height:1.6}
+
+/* TOP BAR */
+.topbar{position:fixed;top:0;left:0;right:0;height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:200}
+.topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-mark{width:28px;height:28px;background:linear-gradient(135deg,#1a73e8,#00897b);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Google Sans',sans-serif;font-weight:700;font-size:14px;flex-shrink:0}
+.logo-text{font-family:'Google Sans',sans-serif;font-size:15px;font-weight:600;color:var(--text)}
+.topbar-sep{width:1px;height:20px;background:var(--border)}
+.topbar-title{font-size:14px;color:var(--text2);font-weight:500}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.topbar-link{font-size:13px;color:var(--text2);text-decoration:none;padding:4px 10px;border-radius:6px;transition:background .15s,color .15s}
+.topbar-link:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.topbar-link.active{background:rgba(26,115,232,.15);color:var(--blue)}
+
+/* NAV */
+nav{position:fixed;top:52px;left:0;width:var(--sidebar);height:calc(100vh - 52px);background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;z-index:100;padding-bottom:40px}
+.nav-sec{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:16px 16px 4px}
+nav a{display:flex;align-items:center;gap:8px;padding:6px 16px;font-size:13px;color:var(--text2);text-decoration:none;border-radius:0 6px 6px 0;margin-right:8px;transition:background .12s,color .12s;white-space:nowrap}
+nav a:hover{background:rgba(255,255,255,.04);color:var(--text)}
+nav a.active{background:rgba(26,115,232,.12);color:var(--blue);border-right:2px solid var(--accent)}
+.nav-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.nav-count{margin-left:auto;font-size:10px;background:var(--surface2);color:var(--text3);border-radius:10px;padding:1px 7px;font-family:'Google Sans Mono',monospace}
+
+/* MAIN */
+main{margin-left:var(--sidebar);margin-top:52px;flex:1;min-width:0;padding:40px 48px 80px}
+
+/* DOMAIN SECTION */
+.domain{margin-bottom:56px;scroll-margin-top:70px}
+.domain-hdr{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.domain-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.domain-title{font-family:'Google Sans',sans-serif;font-size:22px;font-weight:700;color:var(--text)}
+.domain-desc{font-size:13.5px;color:var(--text2);margin-top:2px}
+
+/* TABLE CARD */
+.tcard{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.tcard-hdr{display:flex;align-items:center;gap:10px;padding:14px 20px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.tcard-name{font-family:'Google Sans Mono',monospace;font-size:15px;font-weight:700;color:var(--text)}
+.tcard-desc{font-size:12.5px;color:var(--text3);margin-left:auto}
+.tcard-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;font-family:'Google Sans Mono',monospace;flex-shrink:0}
+.tb-pk{background:rgba(255,166,87,.12);color:var(--orange)}
+.tb-fk{background:rgba(121,192,255,.12);color:var(--blue)}
+.tb-idx{background:rgba(127,211,145,.12);color:var(--green)}
+
+/* SCHEMA TABLE */
+.stable{width:100%;border-collapse:collapse}
+.stable th{text-align:left;padding:8px 16px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);background:var(--bg);border-bottom:1px solid var(--border)}
+.stable td{padding:9px 16px;border-bottom:1px solid var(--surface2);vertical-align:top;font-size:13px}
+.stable tr:last-child td{border-bottom:none}
+.stable tr:hover td{background:rgba(255,255,255,.02)}
+.col-name{font-family:'Google Sans Mono',monospace;color:var(--blue);white-space:nowrap}
+.col-type{font-family:'Google Sans Mono',monospace;color:var(--orange);white-space:nowrap}
+.col-constraint{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:3px;font-family:'Google Sans Mono',monospace;white-space:nowrap}
+.t-pk{background:rgba(255,166,87,.15);color:var(--orange)}
+.t-fk{background:rgba(121,192,255,.15);color:var(--blue)}
+.t-nn{background:rgba(127,211,145,.12);color:var(--green)}
+.t-uq{background:rgba(210,168,255,.12);color:var(--purple)}
+.t-idx{background:rgba(100,255,218,.1);color:var(--teal)}
+.t-def{background:rgba(139,148,158,.1);color:var(--text3)}
+.col-desc{color:var(--text2);font-size:12.5px}
+
+/* SQL BLOCK */
+.sql-wrap{margin-top:0}
+.sql-toggle{display:flex;align-items:center;gap:8px;padding:10px 20px;background:var(--bg);border-top:1px solid var(--border);cursor:pointer;font-size:12px;color:var(--text3);user-select:none;transition:background .15s}
+.sql-toggle:hover{background:rgba(255,255,255,.03);color:var(--text2)}
+.sql-toggle svg{transition:transform .2s}
+.sql-toggle.open svg{transform:rotate(90deg)}
+.sql-block{display:none;padding:16px 20px;background:#090d12;border-top:1px solid var(--border);overflow-x:auto}
+.sql-block.open{display:block}
+.sql-block pre{font-family:'Google Sans Mono',monospace;font-size:12px;line-height:1.8;color:var(--text);white-space:pre}
+.sk{color:var(--red)} .st{color:var(--orange)} .ss{color:#a5d6ff}
+.sc{color:var(--text3);font-style:italic} .sf{color:var(--green)} .sn{color:var(--teal)}
+
+/* INDEX LIST */
+.idx-list{padding:10px 20px;background:var(--bg);border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px}
+.idx-item{font-family:'Google Sans Mono',monospace;font-size:11.5px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:3px 10px;color:var(--text2)}
+.idx-item span{color:var(--teal)}
+
+/* ERD CALLOUT */
+.callout{display:flex;gap:12px;padding:14px 18px;border-radius:8px;margin:12px 0 24px;font-size:13px;line-height:1.6;border-left:3px solid}
+.ci{background:rgba(121,192,255,.07);border-color:var(--blue);color:var(--text2)}
+.cw{background:rgba(255,166,87,.07);border-color:var(--orange);color:var(--text2)}
+.callout strong{color:var(--text)}
+
+/* RECORDING ARCH */
+.arch-box{background:#090d12;border:1px solid var(--border);border-radius:10px;padding:24px;margin:20px 0;overflow-x:auto}
+.arch-box pre{font-family:'Google Sans Mono',monospace;font-size:12.5px;line-height:1.7;color:var(--text);white-space:pre}
+
+/* STATS BAR */
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 20px;text-align:center;min-width:120px}
+.stat-val{font-family:'Google Sans',sans-serif;font-size:24px;font-weight:700;color:var(--blue);line-height:1}
+.stat-lbl{font-size:11.5px;color:var(--text3);margin-top:4px}
+
+h3{font-family:'Google Sans',sans-serif;font-size:16px;font-weight:600;color:var(--text);margin:24px 0 12px}
+h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:16px 0 8px}
+
+@media(max-width:860px){:root{--sidebar:0}nav{display:none}main{margin-left:0;padding:24px 16px 60px}}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a class="topbar-logo" href="../mocha-platform-architecture.html">
+    <div class="logo-mark">M</div>
+    <span class="logo-text">Mocha Platform</span>
+  </a>
+  <div class="topbar-sep"></div>
+  <span class="topbar-title">PostgreSQL Schema Reference</span>
+  <div class="topbar-right">
+    <a class="topbar-link" href="index.html">API Reference</a>
+    <a class="topbar-link active" href="schema.html">Schema</a>
+    <a class="topbar-link" href="../mocha-platform-architecture.html">← Architecture</a>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="sidebar">
+  <div class="nav-sec">Databases</div>
+  <a href="#db-moat"><span class="nav-dot" style="background:var(--d-identity)"></span>moat_db &nbsp;<span class="nav-count">6 tables</span></a>
+  <a href="#db-channel"><span class="nav-dot" style="background:var(--d-channel)"></span>channel_db &nbsp;<span class="nav-count">7 tables</span></a>
+  <a href="#db-message"><span class="nav-dot" style="background:var(--d-message)"></span>message_db &nbsp;<span class="nav-count">5 tables</span></a>
+  <a href="#db-moq"><span class="nav-dot" style="background:var(--d-moq)"></span>moq_db &nbsp;<span class="nav-count">3 tables</span></a>
+  <a href="#db-recording"><span class="nav-dot" style="background:var(--d-recording)"></span>recording_db &nbsp;<span class="nav-count">4 tables</span></a>
+  <a href="#db-perms"><span class="nav-dot" style="background:var(--d-perms)"></span>perms_db &nbsp;<span class="nav-count">4 tables</span></a>
+  <a href="#db-audit"><span class="nav-dot" style="background:var(--d-audit)"></span>audit_db &nbsp;<span class="nav-count">2 tables</span></a>
+
+  <div class="nav-sec">Identity (moat_db)</div>
+  <a href="#t-users">users</a>
+  <a href="#t-passkeys">passkey_credentials</a>
+  <a href="#t-oauth">oauth_accounts</a>
+  <a href="#t-devices">devices</a>
+  <a href="#t-sessions">refresh_sessions</a>
+  <a href="#t-invites">invite_codes</a>
+
+  <div class="nav-sec">Workspace (channel_db)</div>
+  <a href="#t-orgs">organizations</a>
+  <a href="#t-workspaces">workspaces</a>
+  <a href="#t-org-members">org_members</a>
+  <a href="#t-channels">channels</a>
+  <a href="#t-channel-members">channel_members</a>
+  <a href="#t-channel-pins">channel_pins</a>
+  <a href="#t-channel-bookmarks">channel_bookmarks</a>
+
+  <div class="nav-sec">Messages (message_db)</div>
+  <a href="#t-messages">messages</a>
+  <a href="#t-attachments">message_attachments</a>
+  <a href="#t-reactions">reactions</a>
+  <a href="#t-mentions">mentions</a>
+  <a href="#t-receipts">read_receipts</a>
+
+  <div class="nav-sec">MoQ Tracks (moq_db)</div>
+  <a href="#t-track-records">track_records</a>
+  <a href="#t-namespaces">relay_namespaces</a>
+  <a href="#t-mls-keys">mls_key_packages</a>
+
+  <div class="nav-sec">Recording (recording_db)</div>
+  <a href="#t-recordings">recordings</a>
+  <a href="#t-rec-segments">recording_segments</a>
+  <a href="#t-rec-participants">recording_participants</a>
+  <a href="#t-rec-transcripts">transcripts</a>
+
+  <div class="nav-sec">Permissions (perms_db)</div>
+  <a href="#t-roles">roles</a>
+  <a href="#t-role-grants">role_grants</a>
+  <a href="#t-moderation">moderation_actions</a>
+  <a href="#t-notification-prefs">notification_prefs</a>
+
+  <div class="nav-sec">Audit (audit_db)</div>
+  <a href="#t-audit-log">audit_log</a>
+  <a href="#t-compliance-holds">compliance_holds</a>
+</nav>
+
+<!-- MAIN -->
+<main>
+
+<div class="stats">
+  <div class="stat"><div class="stat-val">7</div><div class="stat-lbl">Logical DBs</div></div>
+  <div class="stat"><div class="stat-val">31</div><div class="stat-lbl">Tables</div></div>
+  <div class="stat"><div class="stat-val">MOAT v2</div><div class="stat-lbl">Only place with RDBMS</div></div>
+  <div class="stat"><div class="stat-val">Citus</div><div class="stat-lbl">Horizontal sharding</div></div>
+</div>
+
+<div class="callout ci">
+  <strong>Design rule:</strong> Messages, files, and presence live in the MoQ relay (not in these databases). These schemas cover only what requires persistent, queryable, server-side storage: identity, membership, permissions, metadata, compliance archive, and recording. The relay is the message store; the database is the record of truth about who can access what.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DOMAIN 1 — IDENTITY (moat_db)
+═══════════════════════════════════════════════════════════════ -->
+<div class="domain" id="db-moat">
+  <div class="domain-hdr">
+    <div class="domain-icon" style="background:rgba(121,192,255,.1)">🪪</div>
+    <div>
+      <div class="domain-title">moat_db — Identity & Authentication</div>
+      <div class="domain-desc">Managed by MOAT v2. Sharded by <code>org_id</code> via Citus. Read replicas per region for directory queries.</div>
+    </div>
+  </div>
+
+  <!-- users -->
+  <div class="tcard" id="t-users">
+    <div class="tcard-hdr">
+      <span class="tcard-name">users</span>
+      <span class="tcard-desc">One row per human or bot account</span>
+    </div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-def">gen_random_uuid()</span></div></td><td class="col-desc">Stable user identifier</td></tr>
+      <tr><td class="col-name">display_name</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">User-facing name</td></tr>
+      <tr><td class="col-name">email</td><td class="col-type">citext</td><td><div class="col-constraint"><span class="tag t-uq">UNIQUE</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc">Nullable for anonymous/guest accounts</td></tr>
+      <tr><td class="col-name">avatar_url</td><td class="col-type">text</td><td></td><td class="col-desc">Profile picture URL</td></tr>
+      <tr><td class="col-name">status_emoji</td><td class="col-type">text</td><td></td><td class="col-desc">Custom presence emoji</td></tr>
+      <tr><td class="col-name">status_text</td><td class="col-type">text</td><td></td><td class="col-desc">Custom presence message</td></tr>
+      <tr><td class="col-name">is_bot</td><td class="col-type">boolean</td><td><div class="col-constraint"><span class="tag t-def">DEFAULT false</span></div></td><td class="col-desc">Bot/service account flag</td></tr>
+      <tr><td class="col-name">is_guest</td><td class="col-type">boolean</td><td><div class="col-constraint"><span class="tag t-def">DEFAULT false</span></div></td><td class="col-desc">Guest (no passkey, ephemeral)</td></tr>
+      <tr><td class="col-name">timezone</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-def">'UTC'</span></div></td><td class="col-desc">IANA timezone string</td></tr>
+      <tr><td class="col-name">locale</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-def">'en'</span></div></td><td class="col-desc">BCP-47 language tag</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">deactivated_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Soft-delete. Null = active.</td></tr>
+    </table>
+    <div class="idx-list">
+      <div class="idx-item"><span>idx</span> users_email</div>
+      <div class="idx-item"><span>idx</span> users_deactivated_at (partial: WHERE deactivated_at IS NULL)</div>
+    </div>
+    <div class="sql-wrap">
+      <div class="sql-toggle" onclick="toggleSql(this)">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M3 1l4 4-4 4"/></svg>
+        Show CREATE TABLE
+      </div>
+      <div class="sql-block"><pre><span class="sk">CREATE TABLE</span> users (
+    id              <span class="st">uuid</span>        <span class="sk">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    display_name    <span class="st">text</span>        <span class="sk">NOT NULL</span>,
+    email           <span class="st">citext</span>      <span class="sk">UNIQUE</span>,
+    avatar_url      <span class="st">text</span>,
+    status_emoji    <span class="st">text</span>,
+    status_text     <span class="st">text</span>,
+    is_bot          <span class="st">boolean</span>     <span class="sk">NOT NULL DEFAULT</span> <span class="sf">false</span>,
+    is_guest        <span class="st">boolean</span>     <span class="sk">NOT NULL DEFAULT</span> <span class="sf">false</span>,
+    timezone        <span class="st">text</span>        <span class="sk">NOT NULL DEFAULT</span> <span class="ss">'UTC'</span>,
+    locale          <span class="st">text</span>        <span class="sk">NOT NULL DEFAULT</span> <span class="ss">'en'</span>,
+    created_at      <span class="st">timestamptz</span> <span class="sk">NOT NULL DEFAULT</span> now(),
+    deactivated_at  <span class="st">timestamptz</span>
+);
+<span class="sk">CREATE INDEX</span> users_email_idx <span class="sk">ON</span> users (email) <span class="sk">WHERE</span> email <span class="sk">IS NOT NULL</span>;
+<span class="sk">CREATE INDEX</span> users_active_idx <span class="sk">ON</span> users (id) <span class="sk">WHERE</span> deactivated_at <span class="sk">IS NULL</span>;</pre></div>
+    </div>
+  </div>
+
+  <!-- passkey_credentials -->
+  <div class="tcard" id="t-passkeys">
+    <div class="tcard-hdr">
+      <span class="tcard-name">passkey_credentials</span>
+      <span class="tcard-desc">FIDO2/WebAuthn public key credentials — one per physical authenticator</span>
+    </div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span><span class="tag t-nn">NOT NULL</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">credential_id</td><td class="col-type">bytea</td><td><div class="col-constraint"><span class="tag t-uq">UNIQUE</span><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Authenticator-issued credential ID</td></tr>
+      <tr><td class="col-name">public_key_cbor</td><td class="col-type">bytea</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">COSE-encoded public key</td></tr>
+      <tr><td class="col-name">aaguid</td><td class="col-type">uuid</td><td></td><td class="col-desc">Authenticator model ID</td></tr>
+      <tr><td class="col-name">sign_count</td><td class="col-type">bigint</td><td><div class="col-constraint"><span class="tag t-def">0</span></div></td><td class="col-desc">Replay attack counter</td></tr>
+      <tr><td class="col-name">device_name</td><td class="col-type">text</td><td></td><td class="col-desc">User-assigned label (e.g. "iPhone 16")</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">last_used_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">revoked_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Soft-revoke without delete</td></tr>
+    </table>
+  </div>
+
+  <!-- oauth_accounts -->
+  <div class="tcard" id="t-oauth">
+    <div class="tcard-hdr">
+      <span class="tcard-name">oauth_accounts</span>
+      <span class="tcard-desc">OIDC/SAML linked accounts — Google, Okta, Azure AD, etc.</span>
+    </div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span><span class="tag t-nn">NOT NULL</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">provider</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">google | okta | azure | saml</td></tr>
+      <tr><td class="col-name">provider_user_id</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Subject claim from OIDC token</td></tr>
+      <tr><td class="col-name">scim_id</td><td class="col-type">text</td><td></td><td class="col-desc">Enterprise SCIM external ID</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+    </table>
+    <div class="idx-list">
+      <div class="idx-item"><span>idx</span> oauth_provider_user (provider, provider_user_id) UNIQUE</div>
+    </div>
+  </div>
+
+  <!-- devices -->
+  <div class="tcard" id="t-devices">
+    <div class="tcard-hdr">
+      <span class="tcard-name">devices</span>
+      <span class="tcard-desc">Registered client devices — source of hDevId in MoQ namespace</span>
+    </div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc">Maps to hDevId in MoQ track names</td></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span><span class="tag t-nn">NOT NULL</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">platform</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">ios | android | web | macos | windows | linux</td></tr>
+      <tr><td class="col-name">device_name</td><td class="col-type">text</td><td></td><td class="col-desc">"Suhas's iPhone 16"</td></tr>
+      <tr><td class="col-name">app_version</td><td class="col-type">text</td><td></td><td class="col-desc">Client app version string</td></tr>
+      <tr><td class="col-name">push_token</td><td class="col-type">text</td><td></td><td class="col-desc">APNs/FCM/WNS push token (rotated by OS)</td></tr>
+      <tr><td class="col-name">push_platform</td><td class="col-type">text</td><td></td><td class="col-desc">apns | fcm | wns</td></tr>
+      <tr><td class="col-name">mls_key_package</td><td class="col-type">bytea</td><td></td><td class="col-desc">Latest MLS key package for this device</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">last_seen_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Updated on each token refresh</td></tr>
+      <tr><td class="col-name">revoked_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Device removed/wiped</td></tr>
+    </table>
+  </div>
+
+  <!-- refresh_sessions -->
+  <div class="tcard" id="t-sessions">
+    <div class="tcard-hdr">
+      <span class="tcard-name">refresh_sessions</span>
+      <span class="tcard-desc">Long-lived refresh tokens backing short-lived CAT tokens (15 min)</span>
+    </div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">device_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK devices.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">token_hash</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-uq">UNIQUE</span><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">SHA-256 of the opaque refresh token</td></tr>
+      <tr><td class="col-name">scopes</td><td class="col-type">text[]</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Namespace prefixes this session can access</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">expires_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc">Default 30 days; rotated on use</td></tr>
+      <tr><td class="col-name">revoked_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Explicit logout or device wipe</td></tr>
+    </table>
+  </div>
+
+  <!-- invite_codes -->
+  <div class="tcard" id="t-invites">
+    <div class="tcard-hdr">
+      <span class="tcard-name">invite_codes</span>
+      <span class="tcard-desc">Short-lived codes for joining channels or workspaces</span>
+    </div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">code</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-uq">UNIQUE</span><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">URL-safe random string (12 chars)</td></tr>
+      <tr><td class="col-name">created_by</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">target_type</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">workspace | channel</td></tr>
+      <tr><td class="col-name">target_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">workspace_id or channel_id</td></tr>
+      <tr><td class="col-name">max_uses</td><td class="col-type">int</td><td></td><td class="col-desc">Null = unlimited</td></tr>
+      <tr><td class="col-name">use_count</td><td class="col-type">int</td><td><div class="col-constraint"><span class="tag t-def">0</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">expires_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Null = never expires</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DOMAIN 2 — WORKSPACE / CHANNEL (channel_db)
+═══════════════════════════════════════════════════════════════ -->
+<div class="domain" id="db-channel">
+  <div class="domain-hdr">
+    <div class="domain-icon" style="background:rgba(255,166,87,.1)">🏢</div>
+    <div>
+      <div class="domain-title">channel_db — Organizations, Workspaces & Channels</div>
+      <div class="domain-desc">Sharded by <code>org_id</code>. Reads served from region-local replica. Directory service subscribes to changes and publishes them as MoQ tracks.</div>
+    </div>
+  </div>
+
+  <div class="tcard" id="t-orgs">
+    <div class="tcard-hdr"><span class="tcard-name">organizations</span><span class="tcard-desc">Top-level tenant. Slack "org" equivalent.</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">name</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Display name</td></tr>
+      <tr><td class="col-name">domain</td><td class="col-type">citext</td><td><div class="col-constraint"><span class="tag t-uq">UNIQUE</span></div></td><td class="col-desc">Federation domain (e.g. acme.com)</td></tr>
+      <tr><td class="col-name">slug</td><td class="col-type">citext</td><td><div class="col-constraint"><span class="tag t-uq">UNIQUE</span><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">URL-safe identifier</td></tr>
+      <tr><td class="col-name">plan</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-def">'free'</span></div></td><td class="col-desc">free | pro | enterprise</td></tr>
+      <tr><td class="col-name">relay_preference</td><td class="col-type">text</td><td></td><td class="col-desc">Preferred relay URL (self-hosted support)</td></tr>
+      <tr><td class="col-name">data_region</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-def">'us-west'</span></div></td><td class="col-desc">Namespace-region affinity for GDPR</td></tr>
+      <tr><td class="col-name">retention_days</td><td class="col-type">int</td><td><div class="col-constraint"><span class="tag t-def">90</span></div></td><td class="col-desc">Relay TTL + archive retention</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">deleted_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Soft-delete</td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-workspaces">
+    <div class="tcard-hdr"><span class="tcard-name">workspaces</span><span class="tcard-desc">Named space within an org. Maps to workspace_id in MoQ namespace.</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">org_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK orgs.id</span><span class="tag t-nn">NOT NULL</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc">Citus shard key</td></tr>
+      <tr><td class="col-name">name</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">slug</td><td class="col-type">citext</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Unique within org</td></tr>
+      <tr><td class="col-name">icon_url</td><td class="col-type">text</td><td></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-org-members">
+    <div class="tcard-hdr"><span class="tcard-name">org_members</span><span class="tcard-desc">User membership in an org with their top-level role</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">org_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK orgs.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc">Composite PK</td></tr>
+      <tr><td class="col-name">role</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span><span class="tag t-def">'member'</span></div></td><td class="col-desc">owner | admin | member | guest</td></tr>
+      <tr><td class="col-name">joined_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">invited_by</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc"></td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-channels">
+    <div class="tcard-hdr"><span class="tcard-name">channels</span><span class="tcard-desc">Channel metadata. Maps to channel_id in MoQ namespace.</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc">= channel_id in MoQ namespace</td></tr>
+      <tr><td class="col-name">workspace_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK workspaces.id</span><span class="tag t-nn">NOT NULL</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">name</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Unique within workspace</td></tr>
+      <tr><td class="col-name">description</td><td class="col-type">text</td><td></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">type</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">public | private | dm | group_dm</td></tr>
+      <tr><td class="col-name">is_archived</td><td class="col-type">boolean</td><td><div class="col-constraint"><span class="tag t-def">false</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">created_by</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">moq_namespace</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-uq">UNIQUE</span></div></td><td class="col-desc">Full MoQ namespace prefix for this channel</td></tr>
+      <tr><td class="col-name">mls_group_id</td><td class="col-type">bytea</td><td></td><td class="col-desc">MLS GroupID for private channels and DMs</td></tr>
+      <tr><td class="col-name">last_message_at</td><td class="col-type">timestamptz</td><td><span class="tag t-idx">IDX</span></td><td class="col-desc">Denormalised for fast channel sorting</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+    </table>
+    <div class="idx-list">
+      <div class="idx-item"><span>idx</span> channels_workspace_name (workspace_id, name) UNIQUE WHERE NOT is_archived</div>
+      <div class="idx-item"><span>idx</span> channels_last_msg (workspace_id, last_message_at DESC)</div>
+    </div>
+  </div>
+
+  <div class="tcard" id="t-channel-members">
+    <div class="tcard-hdr"><span class="tcard-name">channel_members</span><span class="tcard-desc">Per-channel membership, notification preferences, read state</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">channel_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK channels.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">role</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-def">'member'</span></div></td><td class="col-desc">owner | moderator | member | guest</td></tr>
+      <tr><td class="col-name">notification_level</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-def">'all'</span></div></td><td class="col-desc">all | mentions | nothing</td></tr>
+      <tr><td class="col-name">last_read_message_id</td><td class="col-type">text</td><td></td><td class="col-desc">MoQ group/object ID of last-read message</td></tr>
+      <tr><td class="col-name">last_read_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">is_muted</td><td class="col-type">boolean</td><td><div class="col-constraint"><span class="tag t-def">false</span></div></td><td class="col-desc">Moderator-applied mute</td></tr>
+      <tr><td class="col-name">muted_until</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Temporary mute expiry</td></tr>
+      <tr><td class="col-name">joined_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-channel-pins">
+    <div class="tcard-hdr"><span class="tcard-name">channel_pins</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">channel_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK channels.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">message_id</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc">MoQ group/object ID</td></tr>
+      <tr><td class="col-name">pinned_by</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">pinned_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-channel-bookmarks">
+    <div class="tcard-hdr"><span class="tcard-name">channel_bookmarks</span><span class="tcard-desc">Per-user saved messages / bookmarks within a channel</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">channel_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK channels.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">message_id</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">MoQ group/object ID</td></tr>
+      <tr><td class="col-name">note</td><td class="col-type">text</td><td></td><td class="col-desc">Optional personal note</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DOMAIN 3 — MESSAGES (message_db) — ARCHIVE / COMPLIANCE
+═══════════════════════════════════════════════════════════════ -->
+<div class="domain" id="db-message">
+  <div class="domain-hdr">
+    <div class="domain-icon" style="background:rgba(210,168,255,.1)">💬</div>
+    <div>
+      <div class="domain-title">message_db — Message Archive & Compliance</div>
+      <div class="domain-desc">Written by the <strong>Recording Server</strong> which subscribes to all MoQ message tracks. Primary store is still the relay. This DB enables compliance export, eDiscovery, full-text search at scale, and long-term retention beyond relay TTL.</div>
+    </div>
+  </div>
+
+  <div class="callout cw">
+    <strong>Important:</strong> Messages here are written asynchronously by the archive subscriber — not in the send path. Relay delivery is still sub-200ms; DB write latency does not affect users.
+  </div>
+
+  <div class="tcard" id="t-messages">
+    <div class="tcard-hdr"><span class="tcard-name">messages</span><span class="tcard-desc">Archived copy of every message published to any MoQ message track</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc">MoQ group_id/object_id — globally unique</td></tr>
+      <tr><td class="col-name">channel_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK channels.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">sender_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">thread_id</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-fk">FK messages.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc">Parent message if thread reply</td></tr>
+      <tr><td class="col-name">content</td><td class="col-type">text</td><td></td><td class="col-desc">Plaintext (after MLS decrypt by archive agent). Null for E2E-only channels where archive agent has no key.</td></tr>
+      <tr><td class="col-name">content_encrypted</td><td class="col-type">bytea</td><td></td><td class="col-desc">Raw MLS ciphertext — always stored for compliance</td></tr>
+      <tr><td class="col-name">moq_group_id</td><td class="col-type">bigint</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">MoQ object group ID</td></tr>
+      <tr><td class="col-name">moq_object_id</td><td class="col-type">bigint</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">MoQ object ID within group</td></tr>
+      <tr><td class="col-name">sent_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc">Sender clock, from CBOR payload</td></tr>
+      <tr><td class="col-name">archived_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc">When the archive agent wrote this row</td></tr>
+      <tr><td class="col-name">edited_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Set when a replacement MoQ object is observed</td></tr>
+      <tr><td class="col-name">deleted_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Soft-delete (moderation or user action)</td></tr>
+    </table>
+    <div class="idx-list">
+      <div class="idx-item"><span>idx</span> messages_channel_sent (channel_id, sent_at DESC)</div>
+      <div class="idx-item"><span>idx</span> messages_thread (thread_id, sent_at)</div>
+      <div class="idx-item"><span>fts</span> messages_content_fts — GIN tsvector on content (pg_trgm)</div>
+    </div>
+    <div class="sql-wrap">
+      <div class="sql-toggle" onclick="toggleSql(this)">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M3 1l4 4-4 4"/></svg>
+        Show full-text search index
+      </div>
+      <div class="sql-block"><pre><span class="sc">-- Full-text search over archived messages</span>
+<span class="sk">ALTER TABLE</span> messages
+    <span class="sk">ADD COLUMN</span> content_fts <span class="st">tsvector</span>
+    <span class="sk">GENERATED ALWAYS AS</span> (to_tsvector(<span class="ss">'english'</span>, coalesce(content, <span class="ss">''</span>))) STORED;
+
+<span class="sk">CREATE INDEX</span> messages_fts_idx <span class="sk">ON</span> messages <span class="sk">USING</span> GIN (content_fts);
+
+<span class="sc">-- Example search query</span>
+<span class="sk">SELECT</span> id, channel_id, sender_id, sent_at,
+       ts_headline(<span class="ss">'english'</span>, content, query) <span class="sk">AS</span> snippet
+<span class="sk">FROM</span> messages,
+     to_tsquery(<span class="ss">'english'</span>, <span class="ss">'design &amp; review'</span>) query
+<span class="sk">WHERE</span> content_fts @@ query
+  <span class="sk">AND</span> channel_id = <span class="ss">'...'</span>
+<span class="sk">ORDER BY</span> ts_rank(content_fts, query) <span class="sk">DESC</span>
+<span class="sk">LIMIT</span> <span class="sn">20</span>;</pre></div>
+    </div>
+  </div>
+
+  <div class="tcard" id="t-attachments">
+    <div class="tcard-hdr"><span class="tcard-name">message_attachments</span><span class="tcard-desc">File references linked to archived messages</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">message_id</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-fk">FK messages.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">moq_track_name</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">file_v1_&lt;sha256&gt; — MoQ track identifier</td></tr>
+      <tr><td class="col-name">content_hash</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc">SHA-256 hex — deduplication key</td></tr>
+      <tr><td class="col-name">filename</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Original filename</td></tr>
+      <tr><td class="col-name">mime_type</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">size_bytes</td><td class="col-type">bigint</td><td></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">s3_key</td><td class="col-type">text</td><td></td><td class="col-desc">Archive copy in S3 (written by archive agent)</td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-reactions">
+    <div class="tcard-hdr"><span class="tcard-name">reactions</span><span class="tcard-desc">Emoji reactions — final merged state from CRDT OR-Set</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">message_id</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK messages.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">emoji</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc">Unicode emoji or custom shortcode</td></tr>
+      <tr><td class="col-name">reacted_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc">Upserted — last-write-wins from CRDT merge</td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-mentions">
+    <div class="tcard-hdr"><span class="tcard-name">mentions</span><span class="tcard-desc">Denormalised for fast @mention notification queries</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">message_id</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK messages.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">mentioned_user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK users.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">channel_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK channels.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc">Denormalised for WHERE channel_id = ?</td></tr>
+      <tr><td class="col-name">sent_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Denormalised for time-range queries</td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-receipts">
+    <div class="tcard-hdr"><span class="tcard-name">read_receipts</span><span class="tcard-desc">Server-side mirror of per-device read positions (from receipts MoQ track)</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">channel_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK channels.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">last_read_message_id</td><td class="col-type">text</td><td></td><td class="col-desc">Furthest-read message ID (LWW — max wins)</td></tr>
+      <tr><td class="col-name">updated_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Upserted by archive agent on receipt track update</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DOMAIN 4 — MoQ TRACK METADATA (moq_db)
+═══════════════════════════════════════════════════════════════ -->
+<div class="domain" id="db-moq">
+  <div class="domain-hdr">
+    <div class="domain-icon" style="background:rgba(100,255,218,.08)">📡</div>
+    <div>
+      <div class="domain-title">moq_db — MoQ Track & Relay Metadata</div>
+      <div class="domain-desc">Written by the Recording Server as it observes tracks. Links MoQ track names to business entities so recordings and archives can be queried by channel, user, or time range.</div>
+    </div>
+  </div>
+
+  <div class="tcard" id="t-track-records">
+    <div class="tcard-hdr"><span class="tcard-name">track_records</span><span class="tcard-desc">One row per active MoQ track publish session</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">moq_namespace</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc">Full MoQ namespace tuple as string</td></tr>
+      <tr><td class="col-name">track_name</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">e.g. msg_v2_hDevId, media_audio_hDevId</td></tr>
+      <tr><td class="col-name">track_type</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">message | presence | media_audio | media_video | media_screen | file | reactions | receipts</td></tr>
+      <tr><td class="col-name">channel_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK channels.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc">Resolved from namespace</td></tr>
+      <tr><td class="col-name">publisher_user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">publisher_device_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK devices.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">started_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">First object observed on this track</td></tr>
+      <tr><td class="col-name">ended_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Null while still active</td></tr>
+      <tr><td class="col-name">object_count</td><td class="col-type">bigint</td><td><div class="col-constraint"><span class="tag t-def">0</span></div></td><td class="col-desc">Objects received (incremented by archive agent)</td></tr>
+      <tr><td class="col-name">bytes_total</td><td class="col-type">bigint</td><td><div class="col-constraint"><span class="tag t-def">0</span></div></td><td class="col-desc">Total bytes archived</td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-namespaces">
+    <div class="tcard-hdr"><span class="tcard-name">relay_namespaces</span><span class="tcard-desc">Active MoQ namespace announcements observed by the relay registry</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">namespace</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc">Full namespace tuple as canonical string</td></tr>
+      <tr><td class="col-name">channel_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK channels.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">relay_url</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Edge relay currently announcing this namespace</td></tr>
+      <tr><td class="col-name">region</td><td class="col-type">text</td><td></td><td class="col-desc">us-west | eu-west | apac-sg etc.</td></tr>
+      <tr><td class="col-name">last_seen_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Updated on each relay heartbeat</td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-mls-keys">
+    <div class="tcard-hdr"><span class="tcard-name">mls_key_packages</span><span class="tcard-desc">Server-cached MLS key packages for devices — used during channel join to send MLS Welcome</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">device_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK devices.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">key_package_data</td><td class="col-type">bytea</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Serialized MLS KeyPackage (TLS-encoded)</td></tr>
+      <tr><td class="col-name">cipher_suite</td><td class="col-type">int</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">MLS CipherSuite value</td></tr>
+      <tr><td class="col-name">consumed</td><td class="col-type">boolean</td><td><div class="col-constraint"><span class="tag t-def">false</span></div></td><td class="col-desc">True once used in a Welcome — never reused</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">expires_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Default: 30 days. Device uploads fresh packages before expiry.</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DOMAIN 5 — RECORDING SERVER (recording_db)
+═══════════════════════════════════════════════════════════════ -->
+<div class="domain" id="db-recording">
+  <div class="domain-hdr">
+    <div class="domain-icon" style="background:rgba(255,123,114,.1)">🎙️</div>
+    <div>
+      <div class="domain-title">recording_db — Recording Server</div>
+      <div class="domain-desc">The Recording Server subscribes to all MoQ tracks in a huddle (or channel), stitches objects into segments, stores them in S3, and serves playback via HTTP Range requests or a MoQ replay track.</div>
+    </div>
+  </div>
+
+  <div class="arch-box">
+    <pre>
+<span style="color:var(--blue)">MoQ Relay</span>                <span style="color:var(--orange)">Recording Server</span>              <span style="color:var(--green)">Clients / Playback</span>
+
+media_audio_dev1 ──────►  Subscribe all tracks  ──► stitch segments
+media_video_dev1 ──────►  Decode + mux (ffmpeg)     ──► S3 upload
+media_screen_dev2 ─────►  Update recording_db        ──► signed URL
+msg_v2_dev1 ───────────►  Archive messages ───────────► HTTP GET /recordings/{id}
+                                                         or MoQ replay track</pre>
+  </div>
+
+  <div class="tcard" id="t-recordings">
+    <div class="tcard-hdr"><span class="tcard-name">recordings</span><span class="tcard-desc">One row per recording session (huddle or channel archive)</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">channel_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK channels.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">huddle_id</td><td class="col-type">text</td><td></td><td class="col-desc">MoQ huddle namespace suffix (null for channel archive)</td></tr>
+      <tr><td class="col-name">initiated_by</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc">User who started the recording</td></tr>
+      <tr><td class="col-name">status</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span><span class="tag t-def">'active'</span></div></td><td class="col-desc">active | processing | ready | failed | deleted</td></tr>
+      <tr><td class="col-name">started_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">ended_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Null while recording is active</td></tr>
+      <tr><td class="col-name">duration_sec</td><td class="col-type">int</td><td></td><td class="col-desc">Computed on finalization</td></tr>
+      <tr><td class="col-name">s3_bucket</td><td class="col-type">text</td><td></td><td class="col-desc">S3 bucket for this org's data region</td></tr>
+      <tr><td class="col-name">s3_prefix</td><td class="col-type">text</td><td></td><td class="col-desc">recordings/{org_id}/{id}/</td></tr>
+      <tr><td class="col-name">thumbnail_url</td><td class="col-type">text</td><td></td><td class="col-desc">Auto-generated thumbnail from first video frame</td></tr>
+      <tr><td class="col-name">size_bytes</td><td class="col-type">bigint</td><td><div class="col-constraint"><span class="tag t-def">0</span></div></td><td class="col-desc">Total storage used</td></tr>
+      <tr><td class="col-name">expires_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Controlled by org retention policy</td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-rec-segments">
+    <div class="tcard-hdr"><span class="tcard-name">recording_segments</span><span class="tcard-desc">Individual chunked media segments written to S3 during recording</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">recording_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK recordings.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">track_record_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK track_records.id</span></div></td><td class="col-desc">Links back to MoQ track provenance</td></tr>
+      <tr><td class="col-name">segment_index</td><td class="col-type">int</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Sequential order within this track</td></tr>
+      <tr><td class="col-name">media_type</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">audio | video | screen | mixed</td></tr>
+      <tr><td class="col-name">moq_group_id</td><td class="col-type">bigint</td><td></td><td class="col-desc">Starting MoQ group ID for this segment</td></tr>
+      <tr><td class="col-name">s3_key</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">S3 object key (fMP4 or WebM segment)</td></tr>
+      <tr><td class="col-name">duration_ms</td><td class="col-type">int</td><td></td><td class="col-desc">Segment duration</td></tr>
+      <tr><td class="col-name">started_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Wall-clock time of first frame</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-rec-participants">
+    <div class="tcard-hdr"><span class="tcard-name">recording_participants</span><span class="tcard-desc">Who was present during a recording and when</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">recording_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK recordings.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">display_name_at_time</td><td class="col-type">text</td><td></td><td class="col-desc">Snapshot of name at recording time</td></tr>
+      <tr><td class="col-name">joined_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">left_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Null if still active</td></tr>
+      <tr><td class="col-name">had_audio</td><td class="col-type">boolean</td><td><div class="col-constraint"><span class="tag t-def">false</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">had_video</td><td class="col-type">boolean</td><td><div class="col-constraint"><span class="tag t-def">false</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">had_screen</td><td class="col-type">boolean</td><td><div class="col-constraint"><span class="tag t-def">false</span></div></td><td class="col-desc"></td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-rec-transcripts">
+    <div class="tcard-hdr"><span class="tcard-name">transcripts</span><span class="tcard-desc">Auto-generated speech-to-text segments linked to recordings</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">recording_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK recordings.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">speaker_user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc">Diarized speaker</td></tr>
+      <tr><td class="col-name">text</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Transcript segment text</td></tr>
+      <tr><td class="col-name">offset_ms</td><td class="col-type">int</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Offset from recording start</td></tr>
+      <tr><td class="col-name">duration_ms</td><td class="col-type">int</td><td></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">confidence</td><td class="col-type">real</td><td></td><td class="col-desc">0.0–1.0 from STT engine</td></tr>
+    </table>
+    <div class="idx-list">
+      <div class="idx-item"><span>fts</span> transcripts_fts — GIN tsvector on text</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DOMAIN 6 — PERMISSIONS (perms_db)
+═══════════════════════════════════════════════════════════════ -->
+<div class="domain" id="db-perms">
+  <div class="domain-hdr">
+    <div class="domain-icon" style="background:rgba(227,179,65,.1)">🛡️</div>
+    <div>
+      <div class="domain-title">perms_db — Permissions, Moderation & Notifications</div>
+      <div class="domain-desc">Fine-grained permission grants, moderation history, and per-channel notification preferences.</div>
+    </div>
+  </div>
+
+  <div class="tcard" id="t-roles">
+    <div class="tcard-hdr"><span class="tcard-name">roles</span><span class="tcard-desc">Custom role definitions per org (beyond built-in owner/admin/member/guest)</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">org_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK orgs.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">name</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">e.g. "compliance-viewer"</td></tr>
+      <tr><td class="col-name">permissions</td><td class="col-type">text[]</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Permission codes: read_messages | export_data | manage_members | manage_channels | moderate | record</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-role-grants">
+    <div class="tcard-hdr"><span class="tcard-name">role_grants</span><span class="tcard-desc">Assignment of a role to a user scoped to an org, workspace, or channel</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">role_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK roles.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">scope_type</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">org | workspace | channel</td></tr>
+      <tr><td class="col-name">scope_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">ID of the org/workspace/channel</td></tr>
+      <tr><td class="col-name">granted_by</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">granted_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">expires_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Temporary role grants</td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-moderation">
+    <div class="tcard-hdr"><span class="tcard-name">moderation_actions</span><span class="tcard-desc">Immutable moderation history — append-only for compliance</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">channel_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK channels.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">moderator_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">target_user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">action</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">mute | unmute | kick | ban | unban | delete_message</td></tr>
+      <tr><td class="col-name">reason</td><td class="col-type">text</td><td></td><td class="col-desc">Moderator-provided reason</td></tr>
+      <tr><td class="col-name">duration_sec</td><td class="col-type">int</td><td></td><td class="col-desc">For timed mutes. Null = permanent.</td></tr>
+      <tr><td class="col-name">moq_signed_proof</td><td class="col-type">bytea</td><td></td><td class="col-desc">Raw MoQ moderation object (signed by moderator token) stored for cryptographic proof</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc">Append-only — never updated or deleted</td></tr>
+    </table>
+  </div>
+
+  <div class="tcard" id="t-notification-prefs">
+    <div class="tcard-hdr"><span class="tcard-name">notification_prefs</span><span class="tcard-desc">Per-user, per-channel notification settings</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">user_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">channel_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span><span class="tag t-fk">FK channels.id</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">level</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-def">'all'</span></div></td><td class="col-desc">all | mentions | nothing</td></tr>
+      <tr><td class="col-name">keyword_triggers</td><td class="col-type">text[]</td><td></td><td class="col-desc">Additional words that trigger notifications</td></tr>
+      <tr><td class="col-name">push_enabled</td><td class="col-type">boolean</td><td><div class="col-constraint"><span class="tag t-def">true</span></div></td><td class="col-desc">APNs/FCM push for this channel</td></tr>
+      <tr><td class="col-name">quiet_hours_start</td><td class="col-type">time</td><td></td><td class="col-desc">Do not disturb start (in user timezone)</td></tr>
+      <tr><td class="col-name">quiet_hours_end</td><td class="col-type">time</td><td></td><td class="col-desc">Do not disturb end</td></tr>
+      <tr><td class="col-name">updated_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DOMAIN 7 — AUDIT (audit_db)
+═══════════════════════════════════════════════════════════════ -->
+<div class="domain" id="db-audit">
+  <div class="domain-hdr">
+    <div class="domain-icon" style="background:rgba(139,148,158,.1)">📋</div>
+    <div>
+      <div class="domain-title">audit_db — Audit Log & Compliance</div>
+      <div class="domain-desc">Append-only, immutable audit trail. Partitioned by month (PostgreSQL declarative partitioning). Never updated or deleted — exported to immutable S3 object storage for long-term retention.</div>
+    </div>
+  </div>
+
+  <div class="tcard" id="t-audit-log">
+    <div class="tcard-hdr"><span class="tcard-name">audit_log</span><span class="tcard-desc">Every significant action in the platform — partitioned by month</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">org_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc">Partition + shard key</td></tr>
+      <tr><td class="col-name">actor_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-idx">IDX</span></div></td><td class="col-desc">Acting user (null for system events)</td></tr>
+      <tr><td class="col-name">actor_ip</td><td class="col-type">inet</td><td></td><td class="col-desc">Source IP at time of action</td></tr>
+      <tr><td class="col-name">action</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span><span class="tag t-idx">IDX</span></div></td><td class="col-desc">user.login | user.logout | channel.create | message.delete | member.ban | recording.start | token.mint | data.export …</td></tr>
+      <tr><td class="col-name">target_type</td><td class="col-type">text</td><td></td><td class="col-desc">user | channel | workspace | recording | message</td></tr>
+      <tr><td class="col-name">target_id</td><td class="col-type">text</td><td></td><td class="col-desc">ID of affected entity</td></tr>
+      <tr><td class="col-name">metadata</td><td class="col-type">jsonb</td><td></td><td class="col-desc">Action-specific context (device_id, old_value, new_value, etc.)</td></tr>
+      <tr><td class="col-name">occurred_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span><span class="tag t-def">now()</span></div></td><td class="col-desc">Partition key</td></tr>
+    </table>
+    <div class="sql-wrap">
+      <div class="sql-toggle" onclick="toggleSql(this)">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M3 1l4 4-4 4"/></svg>
+        Show monthly partitioning DDL
+      </div>
+      <div class="sql-block"><pre><span class="sk">CREATE TABLE</span> audit_log (
+    id          <span class="st">uuid</span>        <span class="sk">NOT NULL DEFAULT</span> gen_random_uuid(),
+    org_id      <span class="st">uuid</span>        <span class="sk">NOT NULL</span>,
+    actor_id    <span class="st">uuid</span>,
+    actor_ip    <span class="st">inet</span>,
+    action      <span class="st">text</span>        <span class="sk">NOT NULL</span>,
+    target_type <span class="st">text</span>,
+    target_id   <span class="st">text</span>,
+    metadata    <span class="st">jsonb</span>,
+    occurred_at <span class="st">timestamptz</span> <span class="sk">NOT NULL DEFAULT</span> now()
+) <span class="sk">PARTITION BY RANGE</span> (occurred_at);
+
+<span class="sc">-- Monthly partitions created by a cron job</span>
+<span class="sk">CREATE TABLE</span> audit_log_2026_07
+    <span class="sk">PARTITION OF</span> audit_log
+    <span class="sk">FOR VALUES FROM</span> (<span class="ss">'2026-07-01'</span>) <span class="sk">TO</span> (<span class="ss">'2026-08-01'</span>);
+
+<span class="sc">-- Old partitions detached and exported to S3 as Parquet for long-term storage</span>
+<span class="sk">ALTER TABLE</span> audit_log <span class="sk">DETACH PARTITION</span> audit_log_2025_01;
+<span class="sc">-- → COPY audit_log_2025_01 TO 's3://mocha-audit/2025/01/' (FORMAT PARQUET)</span></pre></div>
+    </div>
+  </div>
+
+  <div class="tcard" id="t-compliance-holds">
+    <div class="tcard-hdr"><span class="tcard-name">compliance_holds</span><span class="tcard-desc">eDiscovery / legal holds — prevent deletion of data within scope</span></div>
+    <table class="stable">
+      <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+      <tr><td class="col-name">id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-pk">PK</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">org_id</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK orgs.id</span><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">name</td><td class="col-type">text</td><td><div class="col-constraint"><span class="tag t-nn">NOT NULL</span></div></td><td class="col-desc">Legal matter name</td></tr>
+      <tr><td class="col-name">custodian_ids</td><td class="col-type">uuid[]</td><td></td><td class="col-desc">Users whose data is under hold</td></tr>
+      <tr><td class="col-name">channel_ids</td><td class="col-type">uuid[]</td><td></td><td class="col-desc">Channels under hold (null = all)</td></tr>
+      <tr><td class="col-name">date_range_start</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Null = from beginning of time</td></tr>
+      <tr><td class="col-name">date_range_end</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Null = ongoing</td></tr>
+      <tr><td class="col-name">created_by</td><td class="col-type">uuid</td><td><div class="col-constraint"><span class="tag t-fk">FK users.id</span></div></td><td class="col-desc">Compliance officer</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td><div class="col-constraint"><span class="tag t-def">now()</span></div></td><td class="col-desc"></td></tr>
+      <tr><td class="col-name">released_at</td><td class="col-type">timestamptz</td><td></td><td class="col-desc">Hold lifted; data may be deleted per normal policy</td></tr>
+    </table>
+  </div>
+</div>
+
+<div style="height:60px"></div>
+</main>
+
+<script>
+function toggleSql(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('open');
+}
+
+// Sidebar scrollspy
+const domains = document.querySelectorAll('.domain[id], .tcard[id]');
+const links = document.querySelectorAll('#sidebar a');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting)
+      links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+  });
+}, { rootMargin: '-5% 0px -85% 0px', threshold: 0 });
+domains.forEach(d => obs.observe(d));
+</script>
+</body>
+</html>

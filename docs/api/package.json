@@ -1,0 +1,13 @@
+{
+  "name": "@mocha/api-docs",
+  "private": true,
+  "description": "Mocha SDK — API Reference (served locally from mocha.udl)",
+  "scripts": {
+    "serve": "npx serve . --listen 4000 --no-clipboard",
+    "serve:py": "python3 -m http.server 4000",
+    "open": "open http://localhost:4000"
+  },
+  "devDependencies": {
+    "serve": "^14.2.3"
+  }
+}

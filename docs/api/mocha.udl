@@ -1,0 +1,419 @@
+// mocha.udl — UniFFI Interface Definition Language
+// Source of truth for the Mocha cross-platform SDK.
+// Running `cargo build` generates:
+//   Swift  → MochaCore.swift  (via uniffi-bindgen-swift)
+//   Kotlin → mocha_core.kt    (via uniffi-bindgen-kotlin)
+//   Python → mocha_core.py    (via uniffi-bindgen-python)
+// The TypeScript SDK (@mocha/sdk) is hand-maintained against this contract.
+//
+// Naming: UDL uses snake_case. UniFFI auto-converts to camelCase for Swift/Kotlin.
+
+namespace mocha {};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ERRORS
+// ─────────────────────────────────────────────────────────────────────────────
+
+[Error]
+enum MochaError {
+    "AuthFailed",          // Token minting rejected by MOAT v2
+    "RelayUnreachable",    // QUIC handshake timed out; LAN fallback attempted
+    "PermissionDenied",    // Token scope does not cover this channel/track
+    "MlsGroupFull",        // Channel MLS group at 1000-member limit
+    "StorageError",        // SQLite write failed (disk full, permissions)
+    "EncodingError",       // CBOR encode/decode failure (protocol version mismatch)
+    "NetworkError",        // Underlying QUIC/picoquic error
+    "NotConnected",        // Operation requires an active session
+    "InvalidArgument",     // Bad parameter (empty string, unknown channel ID, etc.)
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum SessionState {
+    "Disconnected",
+    "Connecting",
+    "Connected",
+    "Reconnecting",
+    "LanMode",     // Internet lost; connected to mDNS-discovered local relay
+    "Error",
+};
+
+enum PresenceStatus {
+    "Online",
+    "Away",
+    "DoNotDisturb",
+    "Offline",
+};
+
+enum AuthMode {
+    "Cat",
+    "PrivacyPass",
+    "NoAuth",      // Debug only
+};
+
+enum ModerationAction {
+    "Mute",
+    "Unmute",
+    "Kick",
+    "Ban",
+    "Unban",
+};
+
+enum RelayMode {
+    "Managed",    // mocha-net.dev or custom managed relay
+    "LanRelay",   // mDNS-elected local relay (offline mode)
+    "SelfHosted", // Organisation's own relay instance
+};
+
+enum HuddleState {
+    "Joining",
+    "Active",
+    "Ended",
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DICTIONARIES  (value types — copied across FFI boundary)
+// ─────────────────────────────────────────────────────────────────────────────
+
+dictionary SessionConfig {
+    string relay_url;                   // QUIC relay endpoint (required)
+    string org_id;                      // Organisation identifier (required)
+    string workspace_id;                // Workspace within the org (required)
+    string? federation_domain;          // e.g. "acme.com" for federated namespaces
+    string storage_path;                // Local SQLite store directory
+    AuthMode auth_mode;                 // Which token provider to use
+    string? moat_url;                   // MOAT v2 base URL (required for Cat/PrivacyPass)
+    string? pp_issuer_url;              // Privacy Pass issuer URL
+    boolean enable_lan_relay;           // Auto-discover LAN relay via mDNS (default true)
+    u32 history_depth_days;             // Days of message history to cache locally (default 7)
+    boolean debug_mode;                 // Emit detailed transport events
+};
+
+dictionary ChannelInfo {
+    string channel_id;
+    string workspace_id;
+    string name;
+    string? description;
+    boolean is_private;
+    boolean is_dm;
+    u32 member_count;
+    u64 created_at_ms;
+    u64? last_message_at_ms;
+    u32 unread_count;
+};
+
+dictionary Message {
+    string id;                          // "<groupId>/<objectId>" — relay-assigned
+    string channel_id;
+    string sender_id;                   // Hashed user ID
+    string sender_display_name;
+    string content;                     // Plaintext after MLS decrypt
+    u64 timestamp_ms;                   // Unix ms, sender clock
+    string? thread_id;                  // Parent message ID if a reply
+    sequence<Attachment> attachments;
+    sequence<string> mention_ids;       // Mentioned user IDs
+    boolean is_pending;                 // True while in offline queue
+    boolean is_edited;
+};
+
+dictionary Attachment {
+    string track_name;                  // MoQ track name: "file_v1_<sha256>"
+    string content_hash;                // SHA-256 hex string
+    string filename;
+    string mime_type;
+    u64 size_bytes;
+};
+
+dictionary SendOptions {
+    string? thread_id;                  // Reply to this message ID
+    sequence<Attachment>? attachments;
+    sequence<string>? mentions;         // User IDs to @mention
+};
+
+dictionary QueryOptions {
+    string? before_id;                  // Return messages older than this ID
+    string? after_id;                   // Return messages newer than this ID
+    string? thread_id;                  // Only thread replies for this parent
+    u32 limit;                          // Max results (default 50)
+};
+
+dictionary PresenceEntry {
+    string user_id;
+    string display_name;
+    PresenceStatus status;
+    string? custom_status_emoji;
+    string? custom_status_text;
+    u64 last_seen_ms;
+};
+
+dictionary TypingIndicator {
+    string user_id;
+    boolean is_typing;
+    string? thread_id;
+    u64 expires_at_ms;
+};
+
+dictionary ReactionEvent {
+    string message_id;
+    string emoji;
+    string user_id;
+    boolean added;                      // true = added, false = removed
+};
+
+dictionary Receipt {
+    string message_id;
+    string user_id;
+    u64 read_at_ms;
+};
+
+dictionary RosterEvent {
+    string user_id;
+    string display_name;
+    ModerationAction action;
+    string? moderator_id;
+    u64 timestamp_ms;
+};
+
+dictionary HuddleOptions {
+    boolean start_with_video;
+    boolean start_screen_share;
+    boolean record;                     // Requires org-level archival permission
+};
+
+dictionary HuddleParticipant {
+    string user_id;
+    string display_name;
+    boolean audio_muted;
+    boolean video_enabled;
+    boolean screen_sharing;
+    f32 audio_level;                    // 0.0 – 1.0
+};
+
+dictionary SearchResult {
+    Message message;
+    string snippet;                     // FTS5 snippet with highlights
+    f64 rank;
+};
+
+dictionary SearchOptions {
+    string? channel_id;
+    string? sender_id;
+    u64? after_ms;
+    u64? before_ms;
+    u32 limit;                          // default 20
+};
+
+dictionary RelayInfo {
+    string relay_url;
+    RelayMode mode;
+    string? region;
+    u32 round_trip_ms;
+};
+
+dictionary TokenInfo {
+    AuthMode mode;
+    u64 expires_at_ms;
+};
+
+dictionary MochaIdentity {
+    string user_id;                     // Stable hashed user ID
+    string display_name;
+    string device_id;                   // Per-device stable ID (from Keychain/Keystore)
+    sequence<u8> mls_key_package;       // Current MLS key package for this device
+    AuthMode auth_mode;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CALLBACK INTERFACES  (platform provides implementation; Rust calls back)
+// ─────────────────────────────────────────────────────────────────────────────
+
+callback interface SessionStateCallback {
+    void on_state_change(SessionState state);
+};
+
+callback interface RelayChangedCallback {
+    void on_relay_changed(RelayInfo relay);
+};
+
+callback interface TokenRefreshedCallback {
+    void on_token_refreshed(TokenInfo token);
+};
+
+callback interface MessageCallback {
+    void on_message(Message message);
+};
+
+callback interface ReactionCallback {
+    void on_reaction(ReactionEvent event);
+};
+
+callback interface PresenceCallback {
+    void on_presence_update(PresenceEntry entry);
+};
+
+callback interface TypingCallback {
+    void on_typing_update(TypingIndicator indicator);
+};
+
+callback interface ReceiptCallback {
+    void on_receipt_update(Receipt receipt);
+};
+
+callback interface RosterCallback {
+    void on_roster_change(RosterEvent event);
+};
+
+callback interface HistoryCallback {
+    void on_history_ready(string channel_id, u32 messages_added);
+};
+
+callback interface HuddleParticipantCallback {
+    void on_participant_joined(HuddleParticipant participant);
+    void on_participant_left(string user_id);
+    void on_audio_level_changed(string user_id, f32 level);
+    void on_screen_share_started(string user_id);
+    void on_screen_share_ended(string user_id);
+    void on_huddle_ended();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INTERFACES  (Arc<T> — reference-counted, thread-safe handles)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface MochaSession {
+    // Constructor: creates session, opens QUIC connection, performs MOQT handshake.
+    // Blocks until connected or throws. Call from a background thread.
+    [Throws=MochaError]
+    constructor(SessionConfig config);
+
+    // Join a channel. Idempotent — returns existing handle for same channel_id.
+    [Throws=MochaError, Async]
+    MochaChannel join_channel(string channel_id);
+
+    // Open a DM with one or more users. Creates an MLS group scoped to those users.
+    [Throws=MochaError, Async]
+    MochaChannel join_dm(sequence<string> user_ids);
+
+    // Start a huddle in a channel.
+    [Throws=MochaError, Async]
+    MochaHuddle start_huddle(string channel_id, HuddleOptions? options);
+
+    // List all channels in the current workspace from local cache.
+    sequence<ChannelInfo> channels();
+
+    // Read-only access to local SQLite store.
+    LocalStore store();
+
+    // The currently authenticated identity.
+    MochaIdentity identity();
+
+    // Current connection state (synchronous).
+    SessionState state();
+
+    // Gracefully close the QUIC connection (sends GOAWAY).
+    [Async]
+    void disconnect();
+
+    // Event subscriptions.
+    void on_state_change(SessionStateCallback callback);
+    void on_relay_changed(RelayChangedCallback callback);
+    void on_token_refreshed(TokenRefreshedCallback callback);
+};
+
+interface MochaChannel {
+    string channel_id();
+    string workspace_id();
+    ChannelInfo info();
+
+    // Optimistically appends to local store then publishes to MoQ track.
+    // Returned Message.is_pending = true until relay acks.
+    [Throws=MochaError, Async]
+    Message send(string content, SendOptions? options);
+
+    // Publish a file as a MoQ track and return the Attachment reference.
+    [Throws=MochaError, Async]
+    Attachment upload(sequence<u8> data, string filename, string mime_type);
+
+    // Download a file from a MoQ track by content hash.
+    [Throws=MochaError, Async]
+    sequence<u8> download(string content_hash);
+
+    // Add/remove reaction. OR-Set CRDT — concurrent reacts merge cleanly.
+    [Throws=MochaError, Async]
+    void react(string message_id, string emoji);
+
+    [Throws=MochaError, Async]
+    void unreact(string message_id, string emoji);
+
+    // Publish a read receipt and update the cross-device read-position CRDT.
+    [Throws=MochaError, Async]
+    void mark_read(string message_id);
+
+    // Publish to typing track. Auto-expires server-side after 5 s of no updates.
+    void set_typing(boolean is_typing);
+
+    // Synchronous read from local SQLite cache.
+    sequence<Message> messages(QueryOptions? options);
+
+    // Moderator action. Token scope must include moderator role.
+    [Throws=MochaError, Async]
+    void moderate(string user_id, ModerationAction action);
+
+    // Unsubscribe and release MoQ track handles.
+    [Async]
+    void leave();
+
+    // Event subscriptions.
+    void on_message(MessageCallback callback);
+    void on_reaction(ReactionCallback callback);
+    void on_presence_update(PresenceCallback callback);
+    void on_typing_update(TypingCallback callback);
+    void on_receipt_update(ReceiptCallback callback);
+    void on_roster_change(RosterCallback callback);
+    void on_history_ready(HistoryCallback callback);
+};
+
+interface MochaHuddle {
+    string huddle_id();
+    string channel_id();
+    HuddleState state();
+
+    // Current participants (synchronous, from local state).
+    sequence<HuddleParticipant> participants();
+
+    // Local media controls — synchronous, no network call.
+    void set_audio_muted(boolean muted);
+    void set_video_enabled(boolean enabled);
+
+    // Requests platform screen-capture permission then publishes screen track.
+    [Throws=MochaError, Async]
+    void start_screen_share();
+
+    void stop_screen_share();
+
+    // Leave and release all media tracks.
+    [Async]
+    void leave();
+
+    // Event subscriptions.
+    void on_participant_change(HuddleParticipantCallback callback);
+};
+
+interface LocalStore {
+    // Full-text search over cached messages (SQLite FTS5).
+    sequence<SearchResult> search(string query, SearchOptions? options);
+
+    // Channel list from local cache.
+    sequence<ChannelInfo> channels();
+
+    // Roster from local cache.
+    sequence<PresenceEntry> roster(string channel_id);
+
+    // Unread count for a channel.
+    u32 unread_count(string channel_id);
+
+    // Total unread across all channels.
+    u32 total_unread();
+};

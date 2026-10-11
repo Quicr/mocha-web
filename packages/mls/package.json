@@ -1,0 +1,30 @@
+{
+  "name": "@mocha/mls",
+  "version": "0.1.0",
+  "description": "MOCHA MLS Keying — MLS group key management over MoQ Transport (draft-jennings-moq-mocha-mls-keying-00)",
+  "license": "BSD-2-Clause",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "bench": "vitest bench",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@moq-web/session": "^0.2.0-alpha.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "vitest": "^4.0.18"
+  }
+}

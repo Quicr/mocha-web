@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mocha SDK — API Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d1117; --surface:#161b22; --surface2:#21262d; --border:#30363d;
+  --text:#e6edf3; --text2:#8b949e; --text3:#6e7681;
+  --blue:#79c0ff; --green:#7ee787; --purple:#d2a8ff;
+  --orange:#ffa657; --red:#ff7b72; --teal:#64ffda; --yellow:#e3b341;
+  --accent:#1a73e8; --sidebar:240px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;line-height:1.6}
+
+/* TOP BAR */
+.topbar{position:fixed;top:0;left:0;right:0;height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:200}
+.topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-mark{width:28px;height:28px;background:linear-gradient(135deg,#1a73e8,#00897b);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Google Sans',sans-serif;font-weight:700;font-size:14px;flex-shrink:0}
+.logo-text{font-family:'Google Sans',sans-serif;font-size:15px;font-weight:600;color:var(--text)}
+.topbar-sep{width:1px;height:20px;background:var(--border)}
+.topbar-title{font-size:14px;color:var(--text2);font-weight:500}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.topbar-link{font-size:13px;color:var(--text2);text-decoration:none;padding:4px 10px;border-radius:6px;transition:background .15s,color .15s}
+.topbar-link:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.udl-badge{font-family:'Google Sans Mono',monospace;font-size:11px;background:rgba(210,168,255,.12);color:var(--purple);border:1px solid rgba(210,168,255,.2);border-radius:4px;padding:3px 8px}
+
+/* LANG SWITCHER */
+.lang-bar{position:fixed;top:52px;left:0;right:0;height:42px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px 0 calc(var(--sidebar) + 20px);gap:2px;z-index:199}
+.lang-btn{padding:5px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:transparent;font-family:'Google Sans',sans-serif;transition:all .15s;display:flex;align-items:center;gap:6px}
+.lang-btn.active,.lang-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.lang-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-ts{background:#3178c6} .dot-swift{background:#f05138} .dot-kotlin{background:#7f52ff} .dot-rust{background:#ce4a00}
+
+/* SIDEBAR */
+nav{position:fixed;top:94px;left:0;width:var(--sidebar);height:calc(100vh - 94px);background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;z-index:100;padding-bottom:40px}
+.nav-sec{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:16px 16px 4px}
+nav a{display:flex;align-items:center;gap:8px;padding:6px 16px;font-size:13px;color:var(--text2);text-decoration:none;border-radius:0 6px 6px 0;margin-right:8px;transition:background .12s,color .12s}
+nav a:hover{background:rgba(255,255,255,.04);color:var(--text)}
+nav a.active{background:rgba(26,115,232,.15);color:var(--blue);border-right:2px solid var(--accent)}
+.nav-badge{font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:3px;font-family:'Google Sans Mono',monospace;flex-shrink:0}
+.nb-iface{background:rgba(121,192,255,.12);color:var(--blue)}
+.nb-dict{background:rgba(127,211,145,.12);color:var(--green)}
+.nb-enum{background:rgba(255,166,87,.12);color:var(--orange)}
+.nb-cb{background:rgba(210,168,255,.12);color:var(--purple)}
+.nb-err{background:rgba(255,123,114,.12);color:var(--red)}
+
+/* MAIN */
+main{margin-left:var(--sidebar);margin-top:94px;flex:1;min-width:0}
+
+/* MODULE */
+.module{border-bottom:1px solid var(--border);scroll-margin-top:110px}
+.module-hdr{padding:36px 48px 24px;border-bottom:1px solid var(--border)}
+.module-type{display:inline-flex;align-items:center;gap:6px;margin-bottom:12px}
+.module-badge{font-size:11px;font-weight:700;padding:2px 10px;border-radius:4px;font-family:'Google Sans Mono',monospace}
+.mb-iface{background:rgba(121,192,255,.12);color:var(--blue)}
+.mb-dict{background:rgba(127,211,145,.12);color:var(--green)}
+.mb-enum{background:rgba(255,166,87,.12);color:var(--orange)}
+.mb-cb{background:rgba(210,168,255,.12);color:var(--purple)}
+.mb-err{background:rgba(255,123,114,.12);color:var(--red)}
+.module-name{font-family:'Google Sans Mono',monospace;font-size:22px;font-weight:700;color:var(--blue);margin-bottom:8px}
+.module-desc{color:var(--text2);font-size:14px;max-width:680px;line-height:1.7}
+.module-src{margin-top:10px;font-family:'Google Sans Mono',monospace;font-size:11.5px;color:var(--text3)}
+.module-src a{color:var(--purple);text-decoration:none}
+.module-src a:hover{text-decoration:underline}
+
+/* METHODS */
+.methods{padding:0 48px 36px}
+
+.method{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin:16px 0;overflow:hidden}
+.method-hdr{display:flex;align-items:flex-start;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.method-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
+.tag{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:3px;font-family:'Google Sans Mono',monospace}
+.t-async{background:rgba(121,192,255,.12);color:var(--blue)}
+.t-throws{background:rgba(255,123,114,.12);color:var(--red)}
+.t-sync{background:rgba(127,211,145,.12);color:var(--green)}
+.t-constructor{background:rgba(210,168,255,.12);color:var(--purple)}
+.t-callback{background:rgba(255,166,87,.12);color:var(--orange)}
+.method-sig{font-family:'Google Sans Mono',monospace;font-size:13.5px;color:var(--text);line-height:1.6;flex:1}
+.k{color:var(--red)} .fn{color:var(--purple)} .p{color:var(--blue)}
+.ty{color:var(--green)} .ret{color:var(--orange)} .cm{color:var(--text3)}
+.method-body{padding:16px 20px}
+.method-desc{font-size:13.5px;color:var(--text2);line-height:1.7;margin-bottom:14px}
+.method-desc strong{color:var(--text)}
+.method-desc code{font-family:'Google Sans Mono',monospace;font-size:12px;background:var(--surface2);padding:1px 5px;border-radius:3px;color:var(--blue)}
+
+/* PARAMS TABLE */
+.ptable{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:2px;background:var(--bg);border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.ptable th{text-align:left;padding:8px 12px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);background:var(--surface);border-bottom:1px solid var(--border)}
+.ptable td{padding:9px 12px;border-bottom:1px solid var(--surface2);vertical-align:top}
+.ptable tr:last-child td{border-bottom:none}
+.pn{font-family:'Google Sans Mono',monospace;color:var(--blue)}
+.pt{font-family:'Google Sans Mono',monospace;color:var(--green)}
+.pd{color:var(--text2)}
+.opt{font-size:9.5px;background:rgba(110,118,129,.12);color:var(--text3);border-radius:3px;padding:1px 5px;font-family:'Google Sans Mono',monospace}
+
+/* CODE TABS */
+.code-tabs{display:flex;background:var(--surface);border-top:1px solid var(--border)}
+.ctab{padding:8px 16px;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;font-family:'Google Sans',sans-serif;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;gap:5px}
+.ctab.active{color:var(--text);border-color:var(--accent)}
+.code-block{padding:18px 20px;font-family:'Google Sans Mono',monospace;font-size:12.5px;line-height:1.8;background:var(--bg);overflow-x:auto;display:none;white-space:pre}
+.code-block.active{display:block}
+.s-k{color:var(--red)} .s-fn{color:var(--purple)} .s-v{color:var(--blue)}
+.s-t{color:var(--green)} .s-s{color:#a5d6ff} .s-c{color:var(--text3)}
+.s-a{color:var(--orange)} .s-n{color:var(--teal)}
+
+/* FIELD TABLE */
+.ftable{width:100%;border-collapse:collapse;font-size:12.5px;border-radius:8px;overflow:hidden;border:1px solid var(--border);margin:4px 0}
+.ftable th{text-align:left;padding:8px 12px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);background:var(--surface);border-bottom:1px solid var(--border)}
+.ftable td{padding:9px 12px;border-bottom:1px solid var(--surface2);vertical-align:top}
+.ftable tr:last-child td{border-bottom:none}
+
+/* ENUM VARIANTS */
+.variants{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin:4px 0}
+.variant{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px}
+.variant-name{font-family:'Google Sans Mono',monospace;font-size:12.5px;color:var(--orange);margin-bottom:3px}
+.variant-desc{font-size:12px;color:var(--text3)}
+
+/* SECTION HEADING */
+h3{font-family:'Google Sans',sans-serif;font-size:15px;font-weight:600;color:var(--text);margin:20px 0 10px}
+h4{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin:16px 0 8px}
+
+/* CALLOUT */
+.callout{display:flex;gap:12px;padding:14px 18px;border-radius:8px;margin:12px 0;font-size:13px;line-height:1.6;border-left:3px solid}
+.callout.info{background:rgba(121,192,255,.07);border-color:var(--blue);color:var(--text2)}
+.callout.warn{background:rgba(255,166,87,.07);border-color:var(--orange);color:var(--text2)}
+.callout.rust{background:rgba(206,74,0,.07);border-color:#ce4a00;color:var(--text2)}
+.callout strong{color:var(--text)}
+
+/* UDLVIEW */
+.udl-view{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:18px 20px;margin:12px 0;overflow-x:auto}
+.udl-view pre{font-family:'Google Sans Mono',monospace;font-size:12px;line-height:1.8;color:var(--text);white-space:pre}
+.u-k{color:var(--red)} .u-t{color:var(--green)} .u-c{color:var(--text3);font-style:italic} .u-s{color:#a5d6ff} .u-a{color:var(--orange)}
+
+@media(max-width:800px){:root{--sidebar:0}.topbar,.lang-bar{left:0}nav{display:none}main{margin-left:0}}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a class="topbar-logo" href="../mocha-platform-architecture.html">
+    <div class="logo-mark">M</div>
+    <span class="logo-text">Mocha Platform</span>
+  </a>
+  <div class="topbar-sep"></div>
+  <span class="topbar-title">Client SDK — API Reference</span>
+  <div class="topbar-right">
+    <span class="udl-badge">Source: mocha.udl</span>
+    <a class="topbar-link" href="mocha.udl" target="_blank">View UDL ↗</a>
+    <a class="topbar-link" href="schema.html">DB Schema</a>
+    <a class="topbar-link" href="../mocha-platform-architecture.html">← Architecture</a>
+  </div>
+</div>
+
+<!-- LANGUAGE BAR -->
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('ts')"><span class="lang-dot dot-ts"></span>TypeScript</button>
+  <button class="lang-btn" onclick="setLang('swift')"><span class="lang-dot dot-swift"></span>Swift</button>
+  <button class="lang-btn" onclick="setLang('kotlin')"><span class="lang-dot dot-kotlin"></span>Kotlin</button>
+  <button class="lang-btn" onclick="setLang('rust')"><span class="lang-dot dot-rust"></span>Rust</button>
+</div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="nav-sec">Interfaces</div>
+  <a href="#api-session"><span class="nav-badge nb-iface">interface</span>MochaSession</a>
+  <a href="#api-channel"><span class="nav-badge nb-iface">interface</span>MochaChannel</a>
+  <a href="#api-huddle"><span class="nav-badge nb-iface">interface</span>MochaHuddle</a>
+  <a href="#api-store"><span class="nav-badge nb-iface">interface</span>LocalStore</a>
+
+  <div class="nav-sec">Config & Identity</div>
+  <a href="#api-sessionconfig"><span class="nav-badge nb-dict">dict</span>SessionConfig</a>
+  <a href="#api-identity"><span class="nav-badge nb-dict">dict</span>MochaIdentity</a>
+  <a href="#api-auth"><span class="nav-badge nb-enum">enum</span>AuthMode</a>
+
+  <div class="nav-sec">Data Types</div>
+  <a href="#api-message"><span class="nav-badge nb-dict">dict</span>Message</a>
+  <a href="#api-attachment"><span class="nav-badge nb-dict">dict</span>Attachment</a>
+  <a href="#api-sendoptions"><span class="nav-badge nb-dict">dict</span>SendOptions</a>
+  <a href="#api-queryoptions"><span class="nav-badge nb-dict">dict</span>QueryOptions</a>
+  <a href="#api-channelinfo"><span class="nav-badge nb-dict">dict</span>ChannelInfo</a>
+  <a href="#api-presence"><span class="nav-badge nb-dict">dict</span>Presence &amp; Roster</a>
+  <a href="#api-huddle-types"><span class="nav-badge nb-dict">dict</span>Huddle Types</a>
+  <a href="#api-search-types"><span class="nav-badge nb-dict">dict</span>Search Types</a>
+  <a href="#api-relay-types"><span class="nav-badge nb-dict">dict</span>Relay &amp; Token</a>
+
+  <div class="nav-sec">Callbacks</div>
+  <a href="#api-callbacks"><span class="nav-badge nb-cb">callback</span>All Callbacks</a>
+
+  <div class="nav-sec">Enums & Errors</div>
+  <a href="#api-enums"><span class="nav-badge nb-enum">enum</span>Enums</a>
+  <a href="#api-errors"><span class="nav-badge nb-err">error</span>MochaError</a>
+</nav>
+
+<!-- MAIN -->
+<main>
+
+<!-- ── MochaSession ─────────────────────────────────────── -->
+<div class="module" id="api-session">
+  <div class="module-hdr">
+    <div class="module-type">
+      <span class="module-badge mb-iface">interface</span>
+      <span class="module-badge" style="background:rgba(100,255,218,.08);color:var(--teal)">Arc&lt;T&gt;</span>
+    </div>
+    <div class="module-name">MochaSession</div>
+    <p class="module-desc">Top-level entry point. One session per app process. Manages the QUIC connection to the relay (via picoquic on native, WebTransport on web), token refresh, automatic reconnection, LAN relay fallback, and the lifecycle of all open channels.</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a> · Implemented in <code style="color:var(--blue)">mocha-core/src/session.rs</code></div>
+  </div>
+  <div class="methods">
+
+    <!-- constructor -->
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-constructor">constructor</span><span class="tag t-throws">throws MochaError</span></div>
+          <div class="method-sig"><span class="fn">MochaSession</span>(<span class="p">config</span>: <span class="ty">SessionConfig</span>)</div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc">Creates a session, opens the QUIC connection to the relay, and performs the MOQT setup handshake. Blocks until connected or throws. Call from a background thread. On internet loss, automatically falls back to an mDNS-discovered LAN relay if <code>enable_lan_relay</code> is true.</div>
+        <div class="code-tabs">
+          <div class="ctab active" onclick="tab(this,'ts')"><span class="lang-dot dot-ts"></span>TypeScript</div>
+          <div class="ctab" onclick="tab(this,'swift')"><span class="lang-dot dot-swift"></span>Swift</div>
+          <div class="ctab" onclick="tab(this,'kotlin')"><span class="lang-dot dot-kotlin"></span>Kotlin</div>
+          <div class="ctab" onclick="tab(this,'rust')"><span class="lang-dot dot-rust"></span>Rust</div>
+        </div>
+        <div class="code-block active" data-lang="ts"><span class="s-k">import</span> { MochaSession } <span class="s-k">from</span> <span class="s-s">'@mocha/sdk'</span>;
+
+<span class="s-k">const</span> <span class="s-v">session</span> = <span class="s-k">await</span> MochaSession.<span class="s-fn">create</span>({
+  relayUrl: <span class="s-s">'https://relay.acme.com'</span>,
+  orgId: <span class="s-s">'acme-engineering'</span>,
+  workspaceId: <span class="s-s">'eng-team'</span>,
+  authMode: <span class="s-s">'cat'</span>,
+  moatUrl: <span class="s-s">'https://api.acme.com/v1'</span>,
+  enableLanRelay: <span class="s-k">true</span>,
+});</div>
+        <div class="code-block" data-lang="swift"><span class="s-k">import</span> MochaCore
+
+<span class="s-k">let</span> <span class="s-v">session</span> = <span class="s-k">try</span> MochaSession(config: SessionConfig(
+    relayUrl: <span class="s-s">"https://relay.acme.com"</span>,
+    orgId: <span class="s-s">"acme-engineering"</span>,
+    workspaceId: <span class="s-s">"eng-team"</span>,
+    federationDomain: <span class="s-k">nil</span>,
+    storagePath: FileManager.default
+        .urls(for: .documentDirectory, in: .userDomainMask)[<span class="s-n">0</span>].path,
+    authMode: .cat,
+    moatUrl: <span class="s-s">"https://api.acme.com/v1"</span>,
+    ppIssuerUrl: <span class="s-k">nil</span>,
+    enableLanRelay: <span class="s-k">true</span>,
+    historyDepthDays: <span class="s-n">7</span>,
+    debugMode: <span class="s-k">false</span>
+))</div>
+        <div class="code-block" data-lang="kotlin"><span class="s-k">import</span> com.mocha.core.*
+
+<span class="s-k">val</span> <span class="s-v">session</span> = MochaSession(SessionConfig(
+    relayUrl = <span class="s-s">"https://relay.acme.com"</span>,
+    orgId = <span class="s-s">"acme-engineering"</span>,
+    workspaceId = <span class="s-s">"eng-team"</span>,
+    federationDomain = <span class="s-k">null</span>,
+    storagePath = context.filesDir.absolutePath,
+    authMode = AuthMode.CAT,
+    moatUrl = <span class="s-s">"https://api.acme.com/v1"</span>,
+    ppIssuerUrl = <span class="s-k">null</span>,
+    enableLanRelay = <span class="s-k">true</span>,
+    historyDepthDays = <span class="s-n">7u</span>,
+    debugMode = <span class="s-k">false</span>
+))</div>
+        <div class="code-block" data-lang="rust"><span class="s-k">use</span> mocha_core::{MochaSession, SessionConfig, AuthMode};
+
+<span class="s-k">let</span> <span class="s-v">session</span> = MochaSession::<span class="s-fn">new</span>(SessionConfig {
+    relay_url: <span class="s-s">"https://relay.acme.com"</span>.into(),
+    org_id: <span class="s-s">"acme-engineering"</span>.into(),
+    workspace_id: <span class="s-s">"eng-team"</span>.into(),
+    federation_domain: <span class="s-k">None</span>,
+    storage_path: PathBuf::<span class="s-fn">from</span>(<span class="s-s">"./mocha-data"</span>),
+    auth_mode: AuthMode::Cat,
+    moat_url: <span class="s-k">Some</span>(<span class="s-s">"https://api.acme.com/v1"</span>.into()),
+    pp_issuer_url: <span class="s-k">None</span>,
+    enable_lan_relay: <span class="s-k">true</span>,
+    history_depth_days: <span class="s-n">7</span>,
+    debug_mode: <span class="s-k">false</span>,
+})?;</div>
+      </div>
+    </div>
+
+    <!-- join_channel -->
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-async">async</span><span class="tag t-throws">throws MochaError</span></div>
+          <div class="method-sig"><span class="fn">join_channel</span>(<span class="p">channel_id</span>: <span class="ty">String</span>) → <span class="ret">MochaChannel</span></div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc">Subscribes to a channel's MoQ namespace, replays history from the last known offset, and returns a <strong>MochaChannel</strong> handle. Idempotent — calling with the same ID returns the existing channel object. Fires <code>on_history_ready</code> once replay is complete.</div>
+        <table class="ptable">
+          <tr><th>Param</th><th>Type</th><th>Description</th></tr>
+          <tr><td class="pn">channel_id</td><td class="pt">String</td><td class="pd">Channel identifier within the current workspace</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- join_dm -->
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-async">async</span><span class="tag t-throws">throws MochaError</span></div>
+          <div class="method-sig"><span class="fn">join_dm</span>(<span class="p">user_ids</span>: <span class="ty">List&lt;String&gt;</span>) → <span class="ret">MochaChannel</span></div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc">Opens a DM conversation. Creates an MLS group scoped to the given participants. Both 1:1 and group DMs use the same <code>MochaChannel</code> interface as public channels. Deterministic channel ID derived from sorted user IDs — calling again returns the existing channel.</div>
+        <table class="ptable">
+          <tr><th>Param</th><th>Type</th><th>Description</th></tr>
+          <tr><td class="pn">user_ids</td><td class="pt">List&lt;String&gt;</td><td class="pd">One or more user IDs to DM (excluding self)</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- start_huddle -->
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-async">async</span><span class="tag t-throws">throws MochaError</span></div>
+          <div class="method-sig"><span class="fn">start_huddle</span>(<span class="p">channel_id</span>: <span class="ty">String</span>, <span class="p">options</span>: <span class="ty">HuddleOptions?</span>) → <span class="ret">MochaHuddle</span></div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc">Creates an ephemeral audio/video room within a channel. All channel members receive a <code>huddle_started</code> event and can join. Creates a temporary MLS group for E2E-encrypted media signalling.</div>
+      </div>
+    </div>
+
+    <!-- event subscriptions -->
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-sync">sync</span><span class="tag t-callback">callback</span></div>
+          <div class="method-sig">
+            <span class="fn">on_state_change</span>(<span class="p">callback</span>: <span class="ty">SessionStateCallback</span>)<br>
+            <span class="fn">on_relay_changed</span>(<span class="p">callback</span>: <span class="ty">RelayChangedCallback</span>)<br>
+            <span class="fn">on_token_refreshed</span>(<span class="p">callback</span>: <span class="ty">TokenRefreshedCallback</span>)
+          </div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc">Register event handlers. Handlers are called on the platform's main/UI thread. Multiple handlers can be registered per event — all will be called.
+          <br><br>
+          <strong>state_change</strong> fires on every QUIC transition: <code>Connecting → Connected → LanMode → Reconnecting</code> etc.<br>
+          <strong>relay_changed</strong> fires when switching between managed, LAN, or self-hosted relay.<br>
+          <strong>token_refreshed</strong> fires 60 s before expiry and again after successful refresh.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── MochaChannel ─────────────────────────────────────── -->
+<div class="module" id="api-channel">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-iface">interface</span></div>
+    <div class="module-name">MochaChannel</div>
+    <p class="module-desc">Represents one channel, DM, or group DM. Obtained via <code>session.join_channel()</code> or <code>session.join_dm()</code>. Manages message pub/sub, file transfer, presence, reactions, receipts, and threads — all over MoQ tracks. Thread-safe; safe to call from any thread.</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a> · Implemented in <code style="color:var(--blue)">mocha-core/src/channel.rs</code></div>
+  </div>
+  <div class="methods">
+
+    <!-- send -->
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-async">async</span><span class="tag t-throws">throws MochaError</span></div>
+          <div class="method-sig"><span class="fn">send</span>(<span class="p">content</span>: <span class="ty">String</span>, <span class="p">options</span>: <span class="ty">SendOptions?</span>) → <span class="ret">Message</span></div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc">Optimistically appends the message to local SQLite (immediately visible in UI via <code>on_message</code>), then publishes to the MoQ track. The returned <code>Message.is_pending</code> is <strong>true</strong> until the relay assigns a stable group/object ID. If offline, the message is queued in the WAL and delivered on reconnect.</div>
+        <table class="ptable">
+          <tr><th>Param</th><th>Type</th><th>Description</th></tr>
+          <tr><td class="pn">content</td><td class="pt">String</td><td class="pd">Message body — Markdown subset (bold, italic, code, links)</td></tr>
+          <tr><td class="pn">options.thread_id</td><td class="pt">String? <span class="opt">optional</span></td><td class="pd">Parent message ID for a thread reply</td></tr>
+          <tr><td class="pn">options.attachments</td><td class="pt">List&lt;Attachment&gt;? <span class="opt">optional</span></td><td class="pd">Pre-uploaded file references (call <code>upload()</code> first)</td></tr>
+          <tr><td class="pn">options.mentions</td><td class="pt">List&lt;String&gt;? <span class="opt">optional</span></td><td class="pd">User IDs to @mention; triggers push notification</td></tr>
+        </table>
+        <div class="code-tabs">
+          <div class="ctab active" onclick="tab(this,'ts')"><span class="lang-dot dot-ts"></span>TypeScript</div>
+          <div class="ctab" onclick="tab(this,'swift')"><span class="lang-dot dot-swift"></span>Swift</div>
+          <div class="ctab" onclick="tab(this,'kotlin')"><span class="lang-dot dot-kotlin"></span>Kotlin</div>
+          <div class="ctab" onclick="tab(this,'rust')"><span class="lang-dot dot-rust"></span>Rust</div>
+        </div>
+        <div class="code-block active" data-lang="ts"><span class="s-k">const</span> <span class="s-v">channel</span> = <span class="s-k">await</span> session.<span class="s-fn">joinChannel</span>(<span class="s-s">'general'</span>);
+
+<span class="s-c">// Simple message</span>
+<span class="s-k">const</span> <span class="s-v">msg</span> = <span class="s-k">await</span> channel.<span class="s-fn">send</span>(<span class="s-s">'Hello, world!'</span>);
+
+<span class="s-c">// With attachment</span>
+<span class="s-k">const</span> <span class="s-v">att</span> = <span class="s-k">await</span> channel.<span class="s-fn">upload</span>(fileBytes, <span class="s-s">'diagram.png'</span>, <span class="s-s">'image/png'</span>);
+<span class="s-k">await</span> channel.<span class="s-fn">send</span>(<span class="s-s">'Here is the diagram'</span>, { attachments: [att] });</div>
+        <div class="code-block" data-lang="swift"><span class="s-k">let</span> <span class="s-v">channel</span> = <span class="s-k">try await</span> session.<span class="s-fn">joinChannel</span>(channelId: <span class="s-s">"general"</span>)
+
+<span class="s-c">// Simple message</span>
+<span class="s-k">let</span> <span class="s-v">msg</span> = <span class="s-k">try await</span> channel.<span class="s-fn">send</span>(content: <span class="s-s">"Hello, world!"</span>, options: <span class="s-k">nil</span>)
+
+<span class="s-c">// Thread reply</span>
+<span class="s-k">let</span> <span class="s-v">reply</span> = <span class="s-k">try await</span> channel.<span class="s-fn">send</span>(
+    content: <span class="s-s">"Agreed!"</span>,
+    options: SendOptions(threadId: msg.id, attachments: <span class="s-k">nil</span>, mentions: <span class="s-k">nil</span>)
+)</div>
+        <div class="code-block" data-lang="kotlin"><span class="s-k">val</span> <span class="s-v">channel</span> = session.<span class="s-fn">joinChannel</span>(<span class="s-s">"general"</span>)
+
+<span class="s-c">// Simple message</span>
+<span class="s-k">val</span> <span class="s-v">msg</span> = channel.<span class="s-fn">send</span>(<span class="s-s">"Hello, world!"</span>, options = <span class="s-k">null</span>)
+
+<span class="s-c">// With mentions</span>
+channel.<span class="s-fn">send</span>(<span class="s-s">"Hey @alice!"</span>, SendOptions(
+    threadId = <span class="s-k">null</span>,
+    attachments = <span class="s-k">null</span>,
+    mentions = listOf(<span class="s-s">"user_alice_id"</span>)
+))</div>
+        <div class="code-block" data-lang="rust"><span class="s-k">let</span> <span class="s-v">channel</span> = session.<span class="s-fn">join_channel</span>(<span class="s-s">"general"</span>).<span class="s-k">await</span>?;
+
+<span class="s-c">// Simple message</span>
+<span class="s-k">let</span> <span class="s-v">msg</span> = channel.<span class="s-fn">send</span>(<span class="s-s">"Hello, world!"</span>, <span class="s-k">None</span>).<span class="s-k">await</span>?;
+
+<span class="s-c">// Thread reply</span>
+<span class="s-k">let</span> <span class="s-v">reply</span> = channel.<span class="s-fn">send</span>(<span class="s-s">"Agreed!"</span>, <span class="s-k">Some</span>(SendOptions {
+    thread_id: <span class="s-k">Some</span>(msg.id.clone()),
+    attachments: <span class="s-k">None</span>,
+    mentions: <span class="s-k">None</span>,
+})).<span class="s-k">await</span>?;</div>
+      </div>
+    </div>
+
+    <!-- upload / download -->
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-async">async</span><span class="tag t-throws">throws MochaError</span></div>
+          <div class="method-sig">
+            <span class="fn">upload</span>(<span class="p">data</span>: <span class="ty">Bytes</span>, <span class="p">filename</span>: <span class="ty">String</span>, <span class="p">mime_type</span>: <span class="ty">String</span>) → <span class="ret">Attachment</span><br>
+            <span class="fn">download</span>(<span class="p">content_hash</span>: <span class="ty">String</span>) → <span class="ret">Bytes</span>
+          </div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc"><code>upload</code> chunks the data and publishes it as a MoQ track named <code>file_v1_&lt;sha256&gt;</code>. Returns an <code>Attachment</code> reference to embed in a <code>send()</code> call. <code>download</code> subscribes to the file track by content hash and streams the bytes. No HTTP upload server involved — files flow entirely over MoQ.</div>
+      </div>
+    </div>
+
+    <!-- react / mark_read / typing -->
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-async">async</span></div>
+          <div class="method-sig">
+            <span class="fn">react</span>(<span class="p">message_id</span>: <span class="ty">String</span>, <span class="p">emoji</span>: <span class="ty">String</span>) &nbsp;|&nbsp; <span class="fn">unreact</span>(<span class="p">message_id</span>: <span class="ty">String</span>, <span class="p">emoji</span>: <span class="ty">String</span>)<br>
+            <span class="fn">mark_read</span>(<span class="p">message_id</span>: <span class="ty">String</span>) &nbsp;|&nbsp; <span class="fn">set_typing</span>(<span class="p">is_typing</span>: <span class="ty">Bool</span>) <span class="cm">← sync</span>
+          </div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc"><strong>react/unreact</strong>: publishes to <code>reactions_&lt;hDevId&gt;</code> track. Uses an OR-Set CRDT — concurrent reacts from different devices merge automatically.<br>
+        <strong>mark_read</strong>: publishes a receipt to <code>receipts_&lt;hDevId&gt;</code> and updates the cross-device LWW read-position CRDT.<br>
+        <strong>set_typing</strong>: synchronous; publishes to <code>typing_&lt;hDevId&gt;</code>. Indicators auto-expire 5 s after the last update.</div>
+      </div>
+    </div>
+
+    <!-- messages -->
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-sync">sync</span></div>
+          <div class="method-sig"><span class="fn">messages</span>(<span class="p">options</span>: <span class="ty">QueryOptions?</span>) → <span class="ret">List&lt;Message&gt;</span></div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc">Synchronous read from local SQLite cache. Never touches the network. For real-time updates register <code>on_message()</code>. Supports cursor-based pagination via <code>before_id</code> / <code>after_id</code>.</div>
+        <table class="ptable">
+          <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+          <tr><td class="pn">options.before_id</td><td class="pt">String? <span class="opt">optional</span></td><td class="pd">Return messages older than this ID (pagination)</td></tr>
+          <tr><td class="pn">options.thread_id</td><td class="pt">String? <span class="opt">optional</span></td><td class="pd">Return only thread replies for this parent</td></tr>
+          <tr><td class="pn">options.limit</td><td class="pt">u32</td><td class="pd">Max results — default 50</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- events -->
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-sync">sync</span><span class="tag t-callback">callback</span></div>
+          <div class="method-sig">
+            <span class="fn">on_message</span> · <span class="fn">on_reaction</span> · <span class="fn">on_presence_update</span> · <span class="fn">on_typing_update</span> · <span class="fn">on_receipt_update</span> · <span class="fn">on_roster_change</span> · <span class="fn">on_history_ready</span>
+          </div>
+        </div>
+      </div>
+      <div class="method-body">
+        <table class="ptable">
+          <tr><th>Callback</th><th>Payload</th><th>Trigger</th></tr>
+          <tr><td class="pn">on_message</td><td class="pt">Message</td><td class="pd">New or edited message from any device or peer</td></tr>
+          <tr><td class="pn">on_reaction</td><td class="pt">ReactionEvent</td><td class="pd">Reaction added or removed (CRDT merged)</td></tr>
+          <tr><td class="pn">on_presence_update</td><td class="pt">PresenceEntry</td><td class="pd">User came online, went offline, or changed status</td></tr>
+          <tr><td class="pn">on_typing_update</td><td class="pt">TypingIndicator</td><td class="pd">User started or stopped typing</td></tr>
+          <tr><td class="pn">on_receipt_update</td><td class="pt">Receipt</td><td class="pd">Another device marked a message read</td></tr>
+          <tr><td class="pn">on_roster_change</td><td class="pt">RosterEvent</td><td class="pd">Member joined, left, muted, kicked, or banned</td></tr>
+          <tr><td class="pn">on_history_ready</td><td class="pt">channel_id, messages_added</td><td class="pd">History replay complete after join or reconnect</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── MochaHuddle ──────────────────────────────────────── -->
+<div class="module" id="api-huddle">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-iface">interface</span></div>
+    <div class="module-name">MochaHuddle</div>
+    <p class="module-desc">Ephemeral audio/video room. Audio and video are published as separate MoQ tracks per device. An ephemeral MLS group is created for E2E-encrypted media signalling. Destroyed when all participants leave.</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a> · Implemented in <code style="color:var(--blue)">mocha-core/src/huddle.rs</code></div>
+  </div>
+  <div class="methods">
+
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-sync">sync</span></div>
+          <div class="method-sig">
+            <span class="fn">set_audio_muted</span>(<span class="p">muted</span>: <span class="ty">Bool</span>) &nbsp;|&nbsp; <span class="fn">set_video_enabled</span>(<span class="p">enabled</span>: <span class="ty">Bool</span>)<br>
+            <span class="fn">stop_screen_share</span>() &nbsp;|&nbsp; <span class="fn">participants</span>() → <span class="ret">List&lt;HuddleParticipant&gt;</span>
+          </div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc">All synchronous. Muting/unmuting publishes/unpublishes the <code>media_audio_&lt;hDevId&gt;</code> track automatically. <code>participants()</code> reads from local state — no network call.</div>
+      </div>
+    </div>
+
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-async">async</span><span class="tag t-throws">throws MochaError</span></div>
+          <div class="method-sig"><span class="fn">start_screen_share</span>() &nbsp;|&nbsp; <span class="fn">leave</span>()</div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc"><code>start_screen_share</code> triggers the platform permission prompt, then publishes the <code>media_screen_&lt;hDevId&gt;</code> track. <code>leave</code> unpublishes all media tracks, removes this device from the MLS group, and releases the handle.</div>
+      </div>
+    </div>
+
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-sync">sync</span><span class="tag t-callback">callback</span></div>
+          <div class="method-sig"><span class="fn">on_participant_change</span>(<span class="p">callback</span>: <span class="ty">HuddleParticipantCallback</span>)</div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc">Single callback interface covering: <code>on_participant_joined</code>, <code>on_participant_left</code>, <code>on_audio_level_changed</code>, <code>on_screen_share_started</code>, <code>on_screen_share_ended</code>, <code>on_huddle_ended</code>.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── LocalStore ───────────────────────────────────────── -->
+<div class="module" id="api-store">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-iface">interface</span></div>
+    <div class="module-name">LocalStore</div>
+    <p class="module-desc">Read-only view into the local SQLite cache. All methods are synchronous and never touch the network. Obtained via <code>session.store()</code>. Backed by a WAL-mode read-only connection pool — safe to call from any thread without blocking the QUIC event loop.</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a> · Implemented in <code style="color:var(--blue)">mocha-core/src/storage/store.rs</code></div>
+  </div>
+  <div class="methods">
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-sync">sync</span></div>
+          <div class="method-sig"><span class="fn">search</span>(<span class="p">query</span>: <span class="ty">String</span>, <span class="p">options</span>: <span class="ty">SearchOptions?</span>) → <span class="ret">List&lt;SearchResult&gt;</span></div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc">Full-text search over locally cached messages using <strong>SQLite FTS5</strong>. Returns ranked results with snippet highlights. Each <code>SearchResult</code> contains the original <code>Message</code> plus a <code>snippet</code> string with match highlights. For federated search across all peers, use <code>session.federated_search(query)</code> (publishes query as a MoQ object; peers return local matches).</div>
+      </div>
+    </div>
+    <div class="method">
+      <div class="method-hdr">
+        <div>
+          <div class="method-tags"><span class="tag t-sync">sync</span></div>
+          <div class="method-sig">
+            <span class="fn">channels</span>() → <span class="ret">List&lt;ChannelInfo&gt;</span> &nbsp;|&nbsp;
+            <span class="fn">roster</span>(<span class="p">channel_id</span>: <span class="ty">String</span>) → <span class="ret">List&lt;PresenceEntry&gt;</span><br>
+            <span class="fn">unread_count</span>(<span class="p">channel_id</span>: <span class="ty">String</span>) → <span class="ret">u32</span> &nbsp;|&nbsp;
+            <span class="fn">total_unread</span>() → <span class="ret">u32</span>
+          </div>
+        </div>
+      </div>
+      <div class="method-body">
+        <div class="method-desc">All read from local cache — no network. <code>channels()</code> returns sorted by last-message timestamp. <code>roster()</code> returns the current presence state for all members.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SessionConfig ────────────────────────────────────── -->
+<div class="module" id="api-sessionconfig">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-dict">dictionary</span></div>
+    <div class="module-name">SessionConfig</div>
+    <p class="module-desc">Immutable configuration value passed to the <code>MochaSession</code> constructor. All fields except the three required ones have sensible defaults.</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a></div>
+  </div>
+  <div class="methods">
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+      <tr><td class="pn">relay_url</td><td class="pt">String</td><td>✓</td><td>—</td><td class="pd">QUIC relay endpoint</td></tr>
+      <tr><td class="pn">org_id</td><td class="pt">String</td><td>✓</td><td>—</td><td class="pd">Organisation identifier</td></tr>
+      <tr><td class="pn">workspace_id</td><td class="pt">String</td><td>✓</td><td>—</td><td class="pd">Workspace within the org</td></tr>
+      <tr><td class="pn">federation_domain</td><td class="pt">String?</td><td></td><td>null</td><td class="pd">Custom domain for cross-org federation (e.g. <code>acme.com</code>)</td></tr>
+      <tr><td class="pn">storage_path</td><td class="pt">String</td><td></td><td>platform default</td><td class="pd">Directory for local SQLite store</td></tr>
+      <tr><td class="pn">auth_mode</td><td class="pt">AuthMode</td><td></td><td>Cat</td><td class="pd">Token provider: <code>Cat</code>, <code>PrivacyPass</code>, <code>NoAuth</code></td></tr>
+      <tr><td class="pn">moat_url</td><td class="pt">String?</td><td></td><td>null</td><td class="pd">MOAT v2 base URL (required for Cat and PrivacyPass modes)</td></tr>
+      <tr><td class="pn">pp_issuer_url</td><td class="pt">String?</td><td></td><td>null</td><td class="pd">Privacy Pass issuer URL (required for PrivacyPass mode)</td></tr>
+      <tr><td class="pn">enable_lan_relay</td><td class="pt">Bool</td><td></td><td>true</td><td class="pd">Auto-discover LAN relay via mDNS on disconnect</td></tr>
+      <tr><td class="pn">history_depth_days</td><td class="pt">u32</td><td></td><td>7</td><td class="pd">Days of message history to cache locally</td></tr>
+      <tr><td class="pn">debug_mode</td><td class="pt">Bool</td><td></td><td>false</td><td class="pd">Emit verbose transport events via <code>on_state_change</code></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── Message ──────────────────────────────────────────── -->
+<div class="module" id="api-message">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-dict">dictionary</span></div>
+    <div class="module-name">Message</div>
+    <p class="module-desc">Immutable value type. Encoded as CBOR on the wire (JSON fallback for debug). <code>id</code> is stable across relay hops. Passed by value across the FFI boundary.</p>
+  </div>
+  <div class="methods">
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">id</td><td class="pt">String</td><td class="pd">Relay-assigned stable ID: <code>&lt;groupId&gt;/&lt;objectId&gt;</code></td></tr>
+      <tr><td class="pn">channel_id</td><td class="pt">String</td><td class="pd">Channel this message belongs to</td></tr>
+      <tr><td class="pn">sender_id</td><td class="pt">String</td><td class="pd">Hashed user ID of sender</td></tr>
+      <tr><td class="pn">sender_display_name</td><td class="pt">String</td><td class="pd">Display name at time of send</td></tr>
+      <tr><td class="pn">content</td><td class="pt">String</td><td class="pd">Plaintext content after MLS decryption</td></tr>
+      <tr><td class="pn">timestamp_ms</td><td class="pt">u64</td><td class="pd">Unix milliseconds, sender clock</td></tr>
+      <tr><td class="pn">thread_id</td><td class="pt">String?</td><td class="pd">Parent message ID if this is a thread reply</td></tr>
+      <tr><td class="pn">attachments</td><td class="pt">List&lt;Attachment&gt;</td><td class="pd">File references (MoQ track name + content hash)</td></tr>
+      <tr><td class="pn">mention_ids</td><td class="pt">List&lt;String&gt;</td><td class="pd">User IDs mentioned in this message</td></tr>
+      <tr><td class="pn">is_pending</td><td class="pt">Bool</td><td class="pd"><code>true</code> while in offline queue; false after relay acks</td></tr>
+      <tr><td class="pn">is_edited</td><td class="pt">Bool</td><td class="pd">True if a replacement object was published on this track</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── Presence ─────────────────────────────────────────── -->
+<div class="module" id="api-presence">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-dict">dictionary</span></div>
+    <div class="module-name">Presence & Roster Types</div>
+    <p class="module-desc">Presence is heartbeat-driven (5 s intervals on the <code>presence_&lt;hDevId&gt;</code> track). A user is considered offline if no heartbeat is received within 15 s. Roster is an OR-Set CRDT — join/leave events merge without conflicts across offline peers.</p>
+  </div>
+  <div class="methods">
+    <h4>PresenceEntry</h4>
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">user_id</td><td class="pt">String</td><td class="pd">Stable hashed user ID</td></tr>
+      <tr><td class="pn">display_name</td><td class="pt">String</td><td class="pd">Current display name</td></tr>
+      <tr><td class="pn">status</td><td class="pt">PresenceStatus</td><td class="pd">Online / Away / DoNotDisturb / Offline</td></tr>
+      <tr><td class="pn">custom_status_emoji</td><td class="pt">String?</td><td class="pd">User-set status emoji (e.g. "🏖️")</td></tr>
+      <tr><td class="pn">custom_status_text</td><td class="pt">String?</td><td class="pd">User-set status message</td></tr>
+      <tr><td class="pn">last_seen_ms</td><td class="pt">u64</td><td class="pd">Unix ms of last heartbeat received</td></tr>
+    </table>
+    <h4>TypingIndicator</h4>
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">user_id</td><td class="pt">String</td><td class="pd">Who is typing</td></tr>
+      <tr><td class="pn">is_typing</td><td class="pt">Bool</td><td class="pd">Current state</td></tr>
+      <tr><td class="pn">thread_id</td><td class="pt">String?</td><td class="pd">If typing in a thread reply box</td></tr>
+      <tr><td class="pn">expires_at_ms</td><td class="pt">u64</td><td class="pd">Auto-expiry timestamp (last update + 5 000 ms)</td></tr>
+    </table>
+    <h4>RosterEvent</h4>
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">user_id</td><td class="pt">String</td><td class="pd">Affected user</td></tr>
+      <tr><td class="pn">action</td><td class="pt">ModerationAction</td><td class="pd">Joined / Left / Muted / Kicked / Banned / Unbanned</td></tr>
+      <tr><td class="pn">moderator_id</td><td class="pt">String?</td><td class="pd">Acting moderator (null for self-join/leave)</td></tr>
+      <tr><td class="pn">timestamp_ms</td><td class="pt">u64</td><td class="pd">Event timestamp</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── Callbacks ────────────────────────────────────────── -->
+<div class="module" id="api-callbacks">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-cb">callback interface</span></div>
+    <div class="module-name">Callback Interfaces</div>
+    <p class="module-desc">UniFFI <code>callback interface</code> types. The platform provides a concrete implementation; Rust calls back into it. On iOS/macOS these become Swift protocols. On Android they become Kotlin interfaces. All callbacks are invoked on the main/UI thread.</p>
+  </div>
+  <div class="methods">
+    <div class="callout rust">
+      <strong>UniFFI callback interfaces</strong> — platform provides the implementation, Rust calls back. Swift: a class conforming to a protocol. Kotlin: a class implementing an interface. The UDL-generated glue handles thread marshaling automatically.
+    </div>
+    <table class="ftable">
+      <tr><th>Callback interface</th><th>Method(s)</th><th>Payload(s)</th></tr>
+      <tr><td class="pn">SessionStateCallback</td><td><code>on_state_change</code></td><td class="pt">SessionState</td></tr>
+      <tr><td class="pn">RelayChangedCallback</td><td><code>on_relay_changed</code></td><td class="pt">RelayInfo</td></tr>
+      <tr><td class="pn">TokenRefreshedCallback</td><td><code>on_token_refreshed</code></td><td class="pt">TokenInfo</td></tr>
+      <tr><td class="pn">MessageCallback</td><td><code>on_message</code></td><td class="pt">Message</td></tr>
+      <tr><td class="pn">ReactionCallback</td><td><code>on_reaction</code></td><td class="pt">ReactionEvent</td></tr>
+      <tr><td class="pn">PresenceCallback</td><td><code>on_presence_update</code></td><td class="pt">PresenceEntry</td></tr>
+      <tr><td class="pn">TypingCallback</td><td><code>on_typing_update</code></td><td class="pt">TypingIndicator</td></tr>
+      <tr><td class="pn">ReceiptCallback</td><td><code>on_receipt_update</code></td><td class="pt">Receipt</td></tr>
+      <tr><td class="pn">RosterCallback</td><td><code>on_roster_change</code></td><td class="pt">RosterEvent</td></tr>
+      <tr><td class="pn">HistoryCallback</td><td><code>on_history_ready</code></td><td class="pt">channel_id: String, messages_added: u32</td></tr>
+      <tr><td class="pn">HuddleParticipantCallback</td><td><code>on_participant_joined</code><br><code>on_participant_left</code><br><code>on_audio_level_changed</code><br><code>on_screen_share_started</code><br><code>on_huddle_ended</code></td><td class="pt">HuddleParticipant<br>user_id: String<br>user_id: String, level: f32<br>user_id: String<br>—</td></tr>
+    </table>
+
+    <h3>Platform Usage Examples</h3>
+    <div class="code-tabs" style="margin-top:12px;border:1px solid var(--border);border-radius:8px 8px 0 0;overflow:hidden">
+      <div class="ctab active" onclick="tab(this,'ts')"><span class="lang-dot dot-ts"></span>TypeScript</div>
+      <div class="ctab" onclick="tab(this,'swift')"><span class="lang-dot dot-swift"></span>Swift</div>
+      <div class="ctab" onclick="tab(this,'kotlin')"><span class="lang-dot dot-kotlin"></span>Kotlin</div>
+      <div class="ctab" onclick="tab(this,'rust')"><span class="lang-dot dot-rust"></span>Rust</div>
+    </div>
+    <div class="code-block active" data-lang="ts" style="border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px"><span class="s-c">// TypeScript — closure-based, same as EventEmitter</span>
+channel.<span class="s-fn">onMessage</span>((msg) => {
+  console.<span class="s-fn">log</span>(`${msg.senderDisplayName}: ${msg.content}`);
+});
+
+session.<span class="s-fn">onStateChange</span>((state) => {
+  <span class="s-k">if</span> (state === <span class="s-s">'lanMode'</span>) showBanner(<span class="s-s">'Offline — using local relay'</span>);
+});</div>
+    <div class="code-block" data-lang="swift" style="border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px"><span class="s-c">// Swift — class conforming to generated protocol</span>
+<span class="s-k">class</span> <span class="s-t">MyMessageHandler</span>: MessageCallback {
+    <span class="s-k">func</span> <span class="s-fn">onMessage</span>(message: Message) {
+        DispatchQueue.main.<span class="s-fn">async</span> {
+            self.<span class="s-fn">appendToUI</span>(message)
+        }
+    }
+}
+channel.<span class="s-fn">onMessage</span>(callback: MyMessageHandler())</div>
+    <div class="code-block" data-lang="kotlin" style="border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px"><span class="s-c">// Kotlin — lambda or object expression</span>
+channel.<span class="s-fn">onMessage</span>(<span class="s-k">object</span> : MessageCallback {
+    <span class="s-k">override fun</span> <span class="s-fn">onMessage</span>(message: Message) {
+        viewModel.<span class="s-fn">appendMessage</span>(message)
+    }
+})
+
+<span class="s-c">// or with a lambda (if using a generated fun interface)</span>
+channel.<span class="s-fn">onMessage</span> { msg -> viewModel.<span class="s-fn">appendMessage</span>(msg) }</div>
+    <div class="code-block" data-lang="rust" style="border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px"><span class="s-c">// Rust — implement the trait directly</span>
+<span class="s-k">struct</span> <span class="s-t">MyHandler</span>;
+
+<span class="s-k">impl</span> MessageCallback <span class="s-k">for</span> MyHandler {
+    <span class="s-k">fn</span> <span class="s-fn">on_message</span>(&<span class="s-k">self</span>, message: Message) {
+        println!(<span class="s-s">"[{}] {}"</span>, message.sender_display_name, message.content);
+    }
+}
+
+channel.<span class="s-fn">on_message</span>(Arc::<span class="s-fn">new</span>(MyHandler));</div>
+  </div>
+</div>
+
+<!-- ── Enums ────────────────────────────────────────────── -->
+<div class="module" id="api-enums">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-enum">enum</span></div>
+    <div class="module-name">Enums</div>
+    <p class="module-desc">All enums are exhaustive. New variants may be added in minor versions — always include a default case in switch/when/match statements.</p>
+  </div>
+  <div class="methods">
+    <h4>SessionState</h4>
+    <div class="variants">
+      <div class="variant"><div class="variant-name">Disconnected</div><div class="variant-desc">Not connected. Initial state after construction if connect fails.</div></div>
+      <div class="variant"><div class="variant-name">Connecting</div><div class="variant-desc">QUIC handshake + MOQT setup in progress.</div></div>
+      <div class="variant"><div class="variant-name">Connected</div><div class="variant-desc">Fully connected to the relay. Normal operation.</div></div>
+      <div class="variant"><div class="variant-name">Reconnecting</div><div class="variant-desc">Internet relay lost; attempting reconnect with exponential backoff.</div></div>
+      <div class="variant"><div class="variant-name">LanMode</div><div class="variant-desc">Internet unavailable; connected to mDNS-elected local relay.</div></div>
+      <div class="variant"><div class="variant-name">Error</div><div class="variant-desc">Unrecoverable failure. Check the associated MochaError.</div></div>
+    </div>
+    <h4>AuthMode</h4>
+    <div class="variants">
+      <div class="variant"><div class="variant-name">Cat</div><div class="variant-desc">Common Access Token via MOAT v2. Production default.</div></div>
+      <div class="variant"><div class="variant-name">PrivacyPass</div><div class="variant-desc">Blind-signed token. Anonymous — IP not linked to identity.</div></div>
+      <div class="variant"><div class="variant-name">NoAuth</div><div class="variant-desc">No token. Debug/testing only. Relay must explicitly allow.</div></div>
+    </div>
+    <h4>ModerationAction</h4>
+    <div class="variants">
+      <div class="variant"><div class="variant-name">Mute</div><div class="variant-desc">Prevent user from publishing to channel tracks.</div></div>
+      <div class="variant"><div class="variant-name">Unmute</div><div class="variant-desc">Remove mute.</div></div>
+      <div class="variant"><div class="variant-name">Kick</div><div class="variant-desc">Remove from channel; may rejoin.</div></div>
+      <div class="variant"><div class="variant-name">Ban</div><div class="variant-desc">Remove and block from channel.</div></div>
+      <div class="variant"><div class="variant-name">Unban</div><div class="variant-desc">Lift ban.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Errors ───────────────────────────────────────────── -->
+<div class="module" id="api-errors">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-err">error enum</span></div>
+    <div class="module-name">MochaError</div>
+    <p class="module-desc">All fallible methods throw <code>MochaError</code>. In Swift this becomes a thrown enum; in Kotlin an exception subclass; in Rust a <code>Result</code> type. Defined with UniFFI <code>[Error]</code> attribute.</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a></div>
+  </div>
+  <div class="methods">
+    <table class="ftable">
+      <tr><th>Variant</th><th>When</th><th>Recovery</th></tr>
+      <tr><td class="pn">AuthFailed</td><td class="pd">Token minting rejected by MOAT v2 (wrong credentials, revoked)</td><td class="pd">Re-authenticate; check <code>moat_url</code></td></tr>
+      <tr><td class="pn">RelayUnreachable</td><td class="pd">QUIC handshake timed out. LAN fallback was attempted.</td><td class="pd">Check network; LAN mode may activate automatically</td></tr>
+      <tr><td class="pn">PermissionDenied</td><td class="pd">Token scope does not cover this channel/track operation</td><td class="pd">Request correct scope from MOAT v2</td></tr>
+      <tr><td class="pn">MlsGroupFull</td><td class="pd">Channel MLS group at 1 000-member limit</td><td class="pd">Use a sub-channel or public channel without MLS</td></tr>
+      <tr><td class="pn">StorageError</td><td class="pd">SQLite write failed: disk full, permissions denied</td><td class="pd">Check <code>storage_path</code> permissions; free disk space</td></tr>
+      <tr><td class="pn">EncodingError</td><td class="pd">CBOR encode/decode failed — usually a protocol version mismatch</td><td class="pd">Update SDK; check server and client versions match</td></tr>
+      <tr><td class="pn">NetworkError</td><td class="pd">Underlying picoquic error (e.g. TLS cert invalid, UDP blocked)</td><td class="pd">Check relay certificate; try TCP fallback</td></tr>
+      <tr><td class="pn">NotConnected</td><td class="pd">Operation requires an active session but session is disconnected</td><td class="pd">Await <code>Connected</code> state before calling</td></tr>
+      <tr><td class="pn">InvalidArgument</td><td class="pd">Empty string, unknown channel ID, negative limit, etc.</td><td class="pd">Fix the argument; this is a caller bug</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── MochaIdentity ─────────────────────────────────────── -->
+<div class="module" id="api-identity">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-dict">dictionary</span></div>
+    <div class="module-name">MochaIdentity</div>
+    <p class="module-desc">The authenticated identity bound to this session and device. Returned by <code>MochaSession.identity()</code>. The <code>user_id</code> is a stable hashed value derived from the MOAT v2 credential — it does not change across sessions or devices for the same account. The <code>device_id</code> is unique per device and stored in the system Keychain (iOS/macOS) or Keystore (Android).</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a></div>
+  </div>
+  <div class="methods">
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">user_id</td><td class="pt">String</td><td class="pd">Stable hashed user ID. Published in the MoQ namespace as <code>hClientId</code>. Never changes for the same account.</td></tr>
+      <tr><td class="pn">display_name</td><td class="pt">String</td><td class="pd">Human-readable name set during account creation or SSO import.</td></tr>
+      <tr><td class="pn">device_id</td><td class="pt">String</td><td class="pd">Per-device stable ID stored in Keychain/Keystore. Used to scope MoQ tracks to this device (<code>hDevId</code> in track names).</td></tr>
+      <tr><td class="pn">mls_key_package</td><td class="pt">Bytes</td><td class="pd">Current MLS key package for this device. Published to the relay so other devices can send Welcome messages when creating or updating MLS groups.</td></tr>
+      <tr><td class="pn">auth_mode</td><td class="pt">AuthMode</td><td class="pd">Active token provider for this session: <code>Cat</code>, <code>PrivacyPass</code>, or <code>NoAuth</code>.</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── AuthMode / Providers ─────────────────────────────── -->
+<div class="module" id="api-auth">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-enum">enum</span></div>
+    <div class="module-name">AuthMode</div>
+    <p class="module-desc">Selects the token provider used to mint relay access tokens. Set once in <code>SessionConfig.auth_mode</code>. The relay validates the token on every publish/subscribe — no token, no access. <code>NoAuth</code> is only accepted by relays explicitly configured for debug mode.</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a></div>
+  </div>
+  <div class="methods">
+    <table class="ftable">
+      <tr><th>Variant</th><th>Token type</th><th>Identity linkage</th><th>Required config</th></tr>
+      <tr>
+        <td class="pn">Cat</td>
+        <td class="pd">CWT/COSE-signed Common Access Token (IETF draft-ietf-avtcore-cat)</td>
+        <td class="pd">Linked — token contains hashed user ID. Suitable for authenticated users.</td>
+        <td class="pd"><code>moat_url</code> required</td>
+      </tr>
+      <tr>
+        <td class="pn">PrivacyPass</td>
+        <td class="pd">Blind-signed Privacy Pass token (RFC 9576). Issuer cannot link token to the redemption request.</td>
+        <td class="pd">Unlinkable — IP not associated with identity. Suitable for privacy-sensitive publishing.</td>
+        <td class="pd"><code>moat_url</code> + <code>pp_issuer_url</code> required</td>
+      </tr>
+      <tr>
+        <td class="pn">NoAuth</td>
+        <td class="pd">No token. Connection accepted unconditionally.</td>
+        <td class="pd">None — open access.</td>
+        <td class="pd">Relay must have <code>auth = none</code> in config. Debug/testing only.</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── Attachment ───────────────────────────────────────── -->
+<div class="module" id="api-attachment">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-dict">dictionary</span></div>
+    <div class="module-name">Attachment</div>
+    <p class="module-desc">A reference to a file published as a MoQ track. Files never pass through a server — they are chunked and published directly on the relay as binary objects on a <code>file_v1_&lt;sha256&gt;</code> track. Call <code>MochaChannel.upload()</code> to get an <code>Attachment</code>, then pass it in <code>SendOptions.attachments</code>. Recipients call <code>MochaChannel.download(content_hash)</code> to retrieve the bytes.</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a></div>
+  </div>
+  <div class="methods">
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">track_name</td><td class="pt">String</td><td class="pd">MoQ track name: <code>file_v1_&lt;sha256-prefix&gt;</code>. Clients subscribe to this track to download.</td></tr>
+      <tr><td class="pn">content_hash</td><td class="pt">String</td><td class="pd">Full SHA-256 hex digest of the file content. Used as the key for <code>download()</code> and for deduplication.</td></tr>
+      <tr><td class="pn">filename</td><td class="pt">String</td><td class="pd">Original filename as provided by the sender (e.g. <code>screenshot.png</code>).</td></tr>
+      <tr><td class="pn">mime_type</td><td class="pt">String</td><td class="pd">MIME type (e.g. <code>image/png</code>, <code>application/pdf</code>). Used by the UI for preview rendering.</td></tr>
+      <tr><td class="pn">size_bytes</td><td class="pt">u64</td><td class="pd">Uncompressed byte length. Used to show progress during download.</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── SendOptions ──────────────────────────────────────── -->
+<div class="module" id="api-sendoptions">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-dict">dictionary</span></div>
+    <div class="module-name">SendOptions</div>
+    <p class="module-desc">Optional parameters for <code>MochaChannel.send()</code>. All fields are optional — pass <code>null</code> / <code>nil</code> / <code>None</code> to send a plain message with no attachments, thread context, or mentions.</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a></div>
+  </div>
+  <div class="methods">
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">thread_id</td><td class="pt">String?</td><td class="pd">Parent message ID to reply to. Sets <code>Message.thread_id</code> on the sent message. The parent must exist in the local cache; if not, the message is still sent but the thread UI may not render correctly until history syncs.</td></tr>
+      <tr><td class="pn">attachments</td><td class="pt">List&lt;Attachment&gt;?</td><td class="pd">Files to attach. Each <code>Attachment</code> must have been returned by a prior <code>upload()</code> call on this channel. The relay must still have the file track in cache.</td></tr>
+      <tr><td class="pn">mentions</td><td class="pt">List&lt;String&gt;?</td><td class="pd">User IDs to @-mention. These are set in <code>Message.mention_ids</code> and used by the recipient SDK to trigger mention notifications.</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── QueryOptions ─────────────────────────────────────── -->
+<div class="module" id="api-queryoptions">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-dict">dictionary</span></div>
+    <div class="module-name">QueryOptions</div>
+    <p class="module-desc">Pagination and filtering options for <code>MochaChannel.messages()</code>. All reads are from the local SQLite cache — no network call. Use <code>before_id</code> to page backwards (older messages) and <code>after_id</code> to page forwards (newer messages).</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a></div>
+  </div>
+  <div class="methods">
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      <tr><td class="pn">before_id</td><td class="pt">String?</td><td>null</td><td class="pd">Return messages with an ID older than this one. Used for loading previous history (scroll-up pagination).</td></tr>
+      <tr><td class="pn">after_id</td><td class="pt">String?</td><td>null</td><td class="pd">Return messages with an ID newer than this one. Used for catching up after a gap.</td></tr>
+      <tr><td class="pn">thread_id</td><td class="pt">String?</td><td>null</td><td class="pd">Filter to only return replies to this parent message ID. Used to render thread panels.</td></tr>
+      <tr><td class="pn">limit</td><td class="pt">u32</td><td>50</td><td class="pd">Maximum number of messages to return. Cap at 200 per call; use pagination for larger ranges.</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── ChannelInfo ──────────────────────────────────────── -->
+<div class="module" id="api-channelinfo">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-dict">dictionary</span></div>
+    <div class="module-name">ChannelInfo</div>
+    <p class="module-desc">Metadata snapshot of a channel, read from the local cache. Returned by <code>MochaSession.channels()</code> and <code>LocalStore.channels()</code>. Updated in real-time as the directory track streams changes from the relay.</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a></div>
+  </div>
+  <div class="methods">
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">channel_id</td><td class="pt">String</td><td class="pd">Stable channel identifier. Used in all API calls that target a channel.</td></tr>
+      <tr><td class="pn">workspace_id</td><td class="pt">String</td><td class="pd">Parent workspace this channel belongs to.</td></tr>
+      <tr><td class="pn">name</td><td class="pt">String</td><td class="pd">Display name (e.g. <code>#general</code>, <code>engineering</code>).</td></tr>
+      <tr><td class="pn">description</td><td class="pt">String?</td><td class="pd">Optional channel topic or description.</td></tr>
+      <tr><td class="pn">is_private</td><td class="pt">Bool</td><td class="pd">Private channels require an explicit invitation; not listed in public directory.</td></tr>
+      <tr><td class="pn">is_dm</td><td class="pt">Bool</td><td class="pd">True for direct message channels created via <code>MochaSession.join_dm()</code>.</td></tr>
+      <tr><td class="pn">member_count</td><td class="pt">u32</td><td class="pd">Approximate member count from the local roster cache.</td></tr>
+      <tr><td class="pn">created_at_ms</td><td class="pt">u64</td><td class="pd">Unix milliseconds when the channel was created.</td></tr>
+      <tr><td class="pn">last_message_at_ms</td><td class="pt">u64?</td><td class="pd">Unix milliseconds of the most recent message. Used for channel list sorting.</td></tr>
+      <tr><td class="pn">unread_count</td><td class="pt">u32</td><td class="pd">Messages received since last <code>mark_read()</code>. Includes mentions. Updated by the local CRDT engine.</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── Huddle Types ─────────────────────────────────────── -->
+<div class="module" id="api-huddle-types">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-dict">dictionary</span></div>
+    <div class="module-name">Huddle Types</div>
+    <p class="module-desc">Value types used by <code>MochaHuddle</code> and its callbacks.</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a></div>
+  </div>
+  <div class="methods">
+    <h4>HuddleOptions</h4>
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      <tr><td class="pn">start_with_video</td><td class="pt">Bool</td><td>false</td><td class="pd">Open the camera immediately on join. Prompts for camera permission on first use.</td></tr>
+      <tr><td class="pn">start_screen_share</td><td class="pt">Bool</td><td>false</td><td class="pd">Begin screen capture immediately. Requests platform screen-capture permission.</td></tr>
+      <tr><td class="pn">record</td><td class="pt">Bool</td><td>false</td><td class="pd">Start the recording server subscriber for this huddle. Requires org-level archival permission; throws <code>PermissionDenied</code> if not granted.</td></tr>
+    </table>
+    <h4>HuddleParticipant</h4>
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">user_id</td><td class="pt">String</td><td class="pd">Stable hashed user ID.</td></tr>
+      <tr><td class="pn">display_name</td><td class="pt">String</td><td class="pd">Display name at time of join.</td></tr>
+      <tr><td class="pn">audio_muted</td><td class="pt">Bool</td><td class="pd">True if the participant has muted their microphone locally.</td></tr>
+      <tr><td class="pn">video_enabled</td><td class="pt">Bool</td><td class="pd">True if the camera track is active and publishing.</td></tr>
+      <tr><td class="pn">screen_sharing</td><td class="pt">Bool</td><td class="pd">True if a screen-share track is currently active.</td></tr>
+      <tr><td class="pn">audio_level</td><td class="pt">f32</td><td class="pd">Instantaneous audio energy 0.0–1.0. Updated ~4 Hz. Use to drive speaker highlight UI.</td></tr>
+    </table>
+    <h4>HuddleState</h4>
+    <div class="variants">
+      <div class="variant"><div class="variant-name">Joining</div><div class="variant-desc">MLS group and media tracks being set up. Not yet receiving audio/video.</div></div>
+      <div class="variant"><div class="variant-name">Active</div><div class="variant-desc">Fully connected. Media tracks live.</div></div>
+      <div class="variant"><div class="variant-name">Ended</div><div class="variant-desc">Huddle was ended by the last participant leaving. Handles are released.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Search Types ─────────────────────────────────────── -->
+<div class="module" id="api-search-types">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-dict">dictionary</span></div>
+    <div class="module-name">Search Types</div>
+    <p class="module-desc">Used by <code>LocalStore.search()</code>. Search runs against the local SQLite FTS5 index — entirely offline, no network call. Supports full SQLite FTS5 query syntax: phrase (<code>"hello world"</code>), prefix (<code>moq*</code>), boolean (<code>relay AND auth</code>), column filter (<code>sender:alice</code>).</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a></div>
+  </div>
+  <div class="methods">
+    <h4>SearchOptions</h4>
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      <tr><td class="pn">channel_id</td><td class="pt">String?</td><td>null</td><td class="pd">Limit results to a specific channel. Omit to search across all cached channels.</td></tr>
+      <tr><td class="pn">sender_id</td><td class="pt">String?</td><td>null</td><td class="pd">Limit results to messages from a specific sender.</td></tr>
+      <tr><td class="pn">after_ms</td><td class="pt">u64?</td><td>null</td><td class="pd">Return only messages after this Unix timestamp.</td></tr>
+      <tr><td class="pn">before_ms</td><td class="pt">u64?</td><td>null</td><td class="pd">Return only messages before this Unix timestamp.</td></tr>
+      <tr><td class="pn">limit</td><td class="pt">u32</td><td>20</td><td class="pd">Maximum number of results. Results are ranked by FTS5 BM25 score.</td></tr>
+    </table>
+    <h4>SearchResult</h4>
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">message</td><td class="pt">Message</td><td class="pd">The full message that matched the query.</td></tr>
+      <tr><td class="pn">snippet</td><td class="pt">String</td><td class="pd">FTS5-generated snippet with the matching terms wrapped in <code>&lt;b&gt;</code> tags. Use for search result highlighting in the UI.</td></tr>
+      <tr><td class="pn">rank</td><td class="pt">f64</td><td class="pd">BM25 relevance score (higher = more relevant). Negative in SQLite — sort ascending for best-first.</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── Relay & Token Types ──────────────────────────────── -->
+<div class="module" id="api-relay-types">
+  <div class="module-hdr">
+    <div class="module-type"><span class="module-badge mb-dict">dictionary</span></div>
+    <div class="module-name">Relay &amp; Token Types</div>
+    <p class="module-desc">Value types delivered via session-level callbacks (<code>on_relay_changed</code>, <code>on_token_refreshed</code>). Useful for displaying connection status and auth state in debug or admin UIs.</p>
+    <div class="module-src">Defined in <a href="mocha.udl" target="_blank">mocha.udl</a></div>
+  </div>
+  <div class="methods">
+    <h4>RelayInfo</h4>
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">relay_url</td><td class="pt">String</td><td class="pd">QUIC endpoint URL of the currently active relay.</td></tr>
+      <tr><td class="pn">mode</td><td class="pt">RelayMode</td><td class="pd"><code>Managed</code> (mocha-net.dev), <code>LanRelay</code> (mDNS-elected), or <code>SelfHosted</code>.</td></tr>
+      <tr><td class="pn">region</td><td class="pt">String?</td><td class="pd">Relay region label (e.g. <code>us-west</code>). Null for self-hosted relays that don't report a region.</td></tr>
+      <tr><td class="pn">round_trip_ms</td><td class="pt">u32</td><td class="pd">Last measured round-trip time in milliseconds. Updated on each QUIC PING.</td></tr>
+    </table>
+    <h4>TokenInfo</h4>
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">mode</td><td class="pt">AuthMode</td><td class="pd">The token type that was refreshed.</td></tr>
+      <tr><td class="pn">expires_at_ms</td><td class="pt">u64</td><td class="pd">Unix milliseconds when this token expires. mocha-core refreshes proactively 60 s before expiry; this field is for informational display only.</td></tr>
+    </table>
+    <h4>ReactionEvent</h4>
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">message_id</td><td class="pt">String</td><td class="pd">The message that was reacted to.</td></tr>
+      <tr><td class="pn">emoji</td><td class="pt">String</td><td class="pd">Unicode emoji string (e.g. <code>👍</code>, <code>🎉</code>).</td></tr>
+      <tr><td class="pn">user_id</td><td class="pt">String</td><td class="pd">Who added or removed the reaction.</td></tr>
+      <tr><td class="pn">added</td><td class="pt">Bool</td><td class="pd"><code>true</code> = reaction added; <code>false</code> = reaction removed. OR-Set CRDT — concurrent add+remove from different devices merges cleanly.</td></tr>
+    </table>
+    <h4>Receipt</h4>
+    <table class="ftable">
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td class="pn">message_id</td><td class="pt">String</td><td class="pd">The message that was read.</td></tr>
+      <tr><td class="pn">user_id</td><td class="pt">String</td><td class="pd">Who read it.</td></tr>
+      <tr><td class="pn">read_at_ms</td><td class="pt">u64</td><td class="pd">Unix milliseconds when the read was recorded. LWW-Register — later timestamp wins across devices.</td></tr>
+    </table>
+    <h4>RelayMode</h4>
+    <div class="variants">
+      <div class="variant"><div class="variant-name">Managed</div><div class="variant-desc">mocha-net.dev or a custom managed relay service.</div></div>
+      <div class="variant"><div class="variant-name">LanRelay</div><div class="variant-desc">mDNS-elected local relay. One device on the LAN was elected relay when internet was lost.</div></div>
+      <div class="variant"><div class="variant-name">SelfHosted</div><div class="variant-desc">Organisation's own relay instance.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- padding at bottom -->
+<div style="height:60px"></div>
+</main>
+
+<script>
+let currentLang = 'ts';
+
+function setLang(lang) {
+  currentLang = lang;
+  // update global lang buttons
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.textContent.trim().toLowerCase().startsWith(lang))
+  );
+  // update all code blocks + tabs
+  document.querySelectorAll('.code-block').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === lang)
+  );
+  document.querySelectorAll('.ctab').forEach(t => {
+    const tl = t.textContent.trim().toLowerCase();
+    const match = tl.startsWith(lang);
+    t.classList.toggle('active', match);
+  });
+}
+
+function tab(el, lang) {
+  // only affects the nearest code-block group
+  const parent = el.closest('.code-tabs').parentElement;
+  parent.querySelectorAll('.ctab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  parent.querySelectorAll('.code-block').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === lang)
+  );
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.textContent.trim().toLowerCase().startsWith(lang))
+  );
+}
+
+// Sidebar scrollspy
+const modules = document.querySelectorAll('.module[id]');
+const navLinks = document.querySelectorAll('#sidebar a');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting)
+      navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+  });
+}, { rootMargin: '-10% 0px -80% 0px', threshold: 0 });
+modules.forEach(m => obs.observe(m));
+</script>
+</body>
+</html>

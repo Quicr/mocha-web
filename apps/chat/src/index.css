@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/60 shadow-glass
+           dark:bg-gray-900/70 dark:border-gray-700/50 dark:shadow-none;
+  }
+
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-2xl border border-white/60 rounded-2xl shadow-glass-lg
+           dark:bg-gray-900/80 dark:border-gray-700/50 dark:shadow-none;
+  }
+
+  .glass-input {
+    @apply bg-white/60 backdrop-blur-md border border-mocha-200/50 rounded-xl px-4 py-2.5 text-mocha-800 placeholder-mocha-400/60 focus:ring-2 focus:ring-mocha-400/30 focus:border-mocha-300 outline-none transition-all
+           dark:bg-gray-800/60 dark:border-gray-600/50 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:ring-mocha-500/30 dark:focus:border-gray-500;
+  }
+
+  .glass-button {
+    @apply bg-gradient-to-r from-mocha-600 to-mocha-700 text-white font-medium rounded-xl px-5 py-2.5 shadow-warm hover:shadow-lg hover:from-mocha-700 hover:to-mocha-800 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100
+           dark:from-mocha-500 dark:to-mocha-600 dark:hover:from-mocha-600 dark:hover:to-mocha-700;
+  }
+
+  .glass-button-ghost {
+    @apply text-mocha-600 font-medium rounded-xl px-4 py-2 hover:bg-mocha-100/50 transition-all
+           dark:text-mocha-300 dark:hover:bg-gray-700/50;
+  }
+}

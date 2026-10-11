@@ -1,0 +1,19 @@
+{
+  "name": "mocha-monorepo",
+  "private": true,
+  "license": "BSD-2-Clause",
+  "description": "MOCHA — MoQ Open Communication & Hosting Architecture",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "dev:chat": "pnpm --filter @mocha/chat dev",
+    "dev:webinar": "pnpm --filter @mocha/webinar dev",
+    "test": "pnpm -r run test",
+    "bench": "pnpm -r run bench",
+    "lint": "pnpm -r run lint",
+    "clean": "pnpm -r run clean"
+  },
+  "packageManager": "pnpm@10.28.1",
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
